@@ -247,7 +247,8 @@ Generates every optimized image and normalizes filenames. Originals are **copied
 **Interfaces:**
 - Consumes: `tools/check-links.mjs` from Task 1.
 - Produces: for each role/index, files named `assets/img/<role>-<nn>-<width>.<ext>` where role ∈ {`hero`, `headshot`, `gallery`}, ext ∈ {`avif`, `webp`, `jpg`}, and width ∈ {640, 1280, 2400} **limited to widths not exceeding the source** — sources vary from 1063px to 5075px wide, so not every image has every width.
-- Produces: `assets/img/<role>-<nn>-full.<ext>` for **every** image, at `min(sourceWidth, 2400)`. Any reference needing a single largest URL (lightbox hrefs, `og:image`) uses `-full.jpg`, which always exists.
+- Produces, for a source narrower than 2400px, an **additional variant at the source's own width**, so the best available resolution is always reachable. A 1063px source therefore yields widths `[640, 1063]`.
+- Any reference needing a single largest URL (lightbox `href`, `<img src>` fallback, `og:image`, JSON-LD `image`) uses **the last entry of that image's `widths` array** in the manifest. There is deliberately no separate always-present variant: for a source ≥2400px it would duplicate `-2400` byte for byte, and 17 of 25 sources are ≥2400px.
 - Produces: `_source/image-manifest.json`, mapping each name to `{ "width", "height", "widths": [...] }`. **Tasks 5, 7, 8 read this file** to build `srcset` lists and exact `width`/`height` attributes. It is committed, so a later task never depends on console output from an earlier one.
 
 - [ ] **Step 1: Copy originals into `_source/`**
@@ -356,15 +357,17 @@ for (const [from, name] of RENAMES) {
   // of a 1063px original would be a blurry lie, and markup that assumed one
   // existed would 404.
   const widths = WIDTHS.filter((w) => w <= meta.width);
+
+  // If the source is narrower than our largest tier, add its own width so the
+  // best available resolution stays reachable. No extra always-present variant:
+  // for a source >= 2400px that would duplicate -2400 byte for byte.
+  if (meta.width < 2400 && !widths.includes(meta.width)) widths.push(meta.width);
+  widths.sort((a, b) => a - b);
+
   for (const width of widths) await emit(input, name, width, String(width));
 
-  // -full always exists, whatever the source size, so lightbox hrefs and
-  // og:image can reference one predictable URL per image.
-  const fullWidth = Math.min(meta.width, 2400);
-  await emit(input, name, fullWidth, 'full');
-
   manifest[name] = { width: meta.width, height: meta.height, widths };
-  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})  widths: ${widths.join(', ') || 'none'} + full@${fullWidth}`);
+  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})  widths: ${widths.join(', ')}`);
 }
 
 // Written to disk rather than printed: Tasks 5, 7, 8 are implemented by
@@ -1021,9 +1024,9 @@ follow from it, and violating either produces a 404 the link checker will catch:
    range from 1063px to 5075px wide, so some images have all of 640/1280/2400
    and some have only 640.
 
-Single-URL references always use `-full.jpg`, which exists for every image
-regardless of source size. That means both the lightbox `href` **and** the
-`<img src>` fallback inside each `<picture>` — a hardcoded `-1280.jpg` fallback
+Single-URL references use **the last entry of that image's `widths` array** —
+its largest available variant. That means both the lightbox `href` **and** the
+`<img src>` fallback inside each `<picture>`. A hardcoded `-1280.jpg` fallback
 404s on any source narrower than 1280px, and three gallery sources are 1063px.
 
 Repeat the `<figure>` block for `hero-02` through `hero-04`, and for
@@ -1039,7 +1042,7 @@ excluded by Task 2.
         <picture>
           <source type="image/avif" srcset="/assets/img/hero-01-640.avif 640w, /assets/img/hero-01-1280.avif 1280w, /assets/img/hero-01-2400.avif 2400w" sizes="(min-width: 64em) 25vw, 50vw">
           <source type="image/webp" srcset="/assets/img/hero-01-640.webp 640w, /assets/img/hero-01-1280.webp 1280w, /assets/img/hero-01-2400.webp 2400w" sizes="(min-width: 64em) 25vw, 50vw">
-          <img src="/assets/img/hero-01-full.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in performance." fetchpriority="high" decoding="async">
+          <img src="/assets/img/hero-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in performance." fetchpriority="high" decoding="async">
         </picture>
       </figure>
       <!-- hero-02, hero-03, hero-04: identical, but loading="lazy" and no fetchpriority -->
@@ -1050,7 +1053,7 @@ excluded by Task 2.
     <h2 id="headshots-title" class="section-title">Headshots</h2>
     <div class="grid-gallery reveal" style="margin-block-start: var(--space-l)">
       <figure class="figure">
-        <a href="/assets/img/headshot-01-full.jpg" data-lightbox data-alt="Headshot of Nikol Tsvetanova.">
+        <a href="/assets/img/headshot-01-2400.jpg" data-lightbox data-alt="Headshot of Nikol Tsvetanova.">
           <picture>
             <source type="image/avif" srcset="/assets/img/headshot-01-640.avif 640w, /assets/img/headshot-01-1280.avif 1280w" sizes="(min-width: 64em) 33vw, 50vw">
             <source type="image/webp" srcset="/assets/img/headshot-01-640.webp 640w, /assets/img/headshot-01-1280.webp 1280w" sizes="(min-width: 64em) 33vw, 50vw">
@@ -1191,7 +1194,8 @@ Task 4 shell, `aria-current="page"` on Gallery, `<title>Nikol Tsvetanova — Gal
 
 **Read `_source/image-manifest.json` first**, exactly as Task 5 does: `srcset`
 lists only the widths that image actually has, `width`/`height` come from the
-manifest, and the lightbox `href` uses `-full.jpg`. This matters more here than
+manifest, and single-URL references use that image's largest available width.
+This matters more here than
 on the index — 8 of the 14 gallery sources are under 2400px wide and three are
 only 1063px, so a copy-pasted three-width `srcset` will 404.
 
@@ -1201,11 +1205,11 @@ only 1063px, so a copy-pasted three-width `srcset` will 404.
 
   <div class="grid-gallery is-wide reveal" style="margin-block-start: var(--space-l)">
     <figure class="figure">
-      <a href="/assets/img/gallery-01-full.jpg" data-lightbox data-alt="Nikol Tsvetanova in String Theory.">
+      <a href="/assets/img/gallery-01-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in String Theory.">
         <picture>
           <source type="image/avif" srcset="/assets/img/gallery-01-640.avif 640w, /assets/img/gallery-01-1280.avif 1280w, /assets/img/gallery-01-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
           <source type="image/webp" srcset="/assets/img/gallery-01-640.webp 640w, /assets/img/gallery-01-1280.webp 1280w, /assets/img/gallery-01-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
-          <img src="/assets/img/gallery-01-full.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in String Theory." loading="lazy" decoding="async">
+          <img src="/assets/img/gallery-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in String Theory." loading="lazy" decoding="async">
         </picture>
       </a>
       <figcaption>String Theory</figcaption>
@@ -1269,7 +1273,7 @@ poster; use `hero-02` until a dedicated frame exists, taking its `width` and
 
   <div class="reveal" style="margin-block-start: var(--space-l)">
     <button class="facade" type="button" data-youtube="REEL_ID" data-title="Nikol Tsvetanova — acting reel">
-      <img src="/assets/img/hero-02-full.jpg" width="WIDTH" height="HEIGHT" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/hero-02-2400.jpg" width="WIDTH" height="HEIGHT" alt="" loading="lazy" decoding="async">
       <span class="visually-hidden">Play reel — Nikol Tsvetanova</span>
     </button>
     <noscript>
@@ -1373,7 +1377,7 @@ Insert into each `<head>`, changing `PAGE_PATH`, `PAGE_TITLE`, and `PAGE_DESC` p
 <meta property="og:title" content="PAGE_TITLE">
 <meta property="og:description" content="PAGE_DESC">
 <meta property="og:url" content="https://nikoltsvetanova.com/PAGE_PATH">
-<meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-full.jpg">
+<meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-2400.jpg">
 <meta name="twitter:card" content="summary_large_image">
 ```
 
@@ -1399,7 +1403,7 @@ Place before `</head>`:
   "jobTitle": "Actor",
   "nationality": "Bulgarian",
   "url": "https://nikoltsvetanova.com/",
-  "image": "https://nikoltsvetanova.com/assets/img/headshot-01-full.jpg",
+  "image": "https://nikoltsvetanova.com/assets/img/headshot-01-2400.jpg",
   "alumniOf": {
     "@type": "CollegeOrUniversity",
     "name": "SUNY Purchase"
