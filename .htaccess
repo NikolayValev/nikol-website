@@ -11,7 +11,16 @@
 </IfModule>
 
 <IfModule mod_headers.c>
-  <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|woff2|mp4|ico)$">
+  # 30 days, and deliberately NOT immutable. Filenames here are not
+  # content-hashed, so replacing a headshot in place under the same name is a
+  # normal thing for the site owner to do. immutable would tell browsers never
+  # to revalidate for a year, leaving visitors on the old image with no
+  # cache-busting convention available to fix it.
+  <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|mp4|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  # The font is the one asset whose bytes are genuinely fixed for its name.
+  <FilesMatch "\.woff2$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   <FilesMatch "\.(css|js)$">
@@ -41,8 +50,9 @@
   RewriteRule ^ https://nikoltsvetanova.com%{REQUEST_URI} [R=301,L]
 
   # Old asset URL that may have been shared with casting.
-  RewriteRule ^IMAGES/Nikol%20Tsvetanova%20Resume\.pdf$ \
-    /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
+  # mod_rewrite tests RewriteRule patterns against the DECODED URL-path, so the
+  # incoming /IMAGES/Nikol%20Tsvetanova%20Resume.pdf arrives here with literal
+  # spaces. Matching the %20 form would be dead code.
   RewriteRule ^IMAGES/Nikol\ Tsvetanova\ Resume\.pdf$ \
     /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
 
