@@ -1,0 +1,277 @@
+/* ---------- Tokens ---------- */
+:root {
+  --paper: #E8E6E4;
+  --panel: #F2F0EF;
+  --ink: #111111;
+  --ink-muted: #55514E;
+  --line: rgba(17, 17, 17, 0.14);
+  --ink-invert: #F2F0EF;
+  --overlay: rgba(17, 17, 17, 0.72);
+
+  --font-body: "Times New Roman", Times, serif;
+  --font-display: "Mirra", "Times New Roman", Times, serif;
+
+  --step--1: clamp(0.83rem, 0.79rem + 0.18vw, 0.94rem);
+  --step-0: clamp(1.06rem, 1.00rem + 0.31vw, 1.25rem);
+  --step-1: clamp(1.33rem, 1.21rem + 0.58vw, 1.75rem);
+  --step-2: clamp(1.66rem, 1.44rem + 1.08vw, 2.62rem);
+  --step-3: clamp(2.07rem, 1.68rem + 1.95vw, 3.93rem);
+  --step-4: clamp(2.59rem, 1.90rem + 3.44vw, 5.90rem);
+
+  --space-2xs: clamp(0.5rem, 0.47rem + 0.16vw, 0.62rem);
+  --space-xs: clamp(0.75rem, 0.70rem + 0.24vw, 0.94rem);
+  --space-s: clamp(1rem, 0.94rem + 0.31vw, 1.25rem);
+  --space-m: clamp(1.5rem, 1.41rem + 0.47vw, 1.87rem);
+  --space-l: clamp(2rem, 1.87rem + 0.63vw, 2.5rem);
+  --space-xl: clamp(3rem, 2.81rem + 0.94vw, 3.75rem);
+  --space-2xl: clamp(4.5rem, 4.03rem + 2.34vw, 6.25rem);
+  --space-3xl: clamp(6rem, 5.06rem + 4.69vw, 9.5rem);
+
+  --measure: 62ch;
+}
+
+@font-face {
+  font-family: "Mirra";
+  src: url("../fonts/mirra.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body, h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+ul[class], ol[class] { list-style: none; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-variant-ligatures: common-ligatures;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, picture, video { display: block; max-width: 100%; height: auto; }
+
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { font-style: italic; }
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* ---------- Utilities ---------- */
+.wrap {
+  width: min(100% - (2 * var(--space-m)), 78rem);
+  margin-inline: auto;
+}
+
+.measure { max-width: var(--measure); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  z-index: 20;
+  padding: var(--space-2xs) var(--space-s);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
+/* ---------- Typography ---------- */
+.display {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+.prose { max-width: var(--measure); text-wrap: pretty; hyphens: auto; }
+.prose p + p { margin-top: var(--space-s); }
+
+.caption {
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* ---------- Navigation ---------- */
+.site-nav { --nav-bg: var(--paper); }
+
+.nav-toggle {
+  position: fixed;
+  inset-block-end: 0;
+  inset-inline: 0;
+  z-index: 12;
+  width: 100%;
+  padding: var(--space-s);
+  background: var(--nav-bg);
+  border: 0;
+  border-block-start: 1px solid var(--line);
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  cursor: pointer;
+}
+
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  display: none;
+  place-content: center;
+  background: var(--paper);
+  text-align: center;
+}
+.nav-overlay[data-open="true"] { display: grid; }
+
+.nav-overlay a {
+  display: block;
+  padding: var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  text-decoration: none;
+}
+
+.nav-close {
+  position: absolute;
+  inset-block-start: var(--space-m);
+  inset-inline-end: var(--space-m);
+  background: none;
+  border: 0;
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  cursor: pointer;
+}
+
+@media (min-width: 64em) {
+  .nav-toggle, .nav-close { display: none; }
+  .nav-overlay {
+    position: fixed;
+    inset: auto 0 0 0;
+    display: flex;
+    justify-content: center;
+    gap: var(--space-m);
+    padding: var(--space-s);
+    background: var(--nav-bg);
+    border-block-start: 1px solid var(--line);
+  }
+  .nav-overlay a { font-family: var(--font-body); font-size: var(--step-1); padding: 0 var(--space-s); }
+}
+
+[aria-current="page"] { font-style: italic; }
+
+/* ---------- Galleries ---------- */
+.grid-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-s);
+}
+
+.grid-gallery.is-wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); }
+
+.figure { margin: 0; }
+.figure img { width: 100%; }
+.figure figcaption { margin-block-start: var(--space-2xs); font-size: var(--step--1); color: var(--ink-muted); }
+
+.span-2 { grid-column: span 2; }
+@media (max-width: 47.99em) { .span-2 { grid-column: auto; } }
+
+.is-grayscale img { filter: grayscale(1); }
+
+/* ---------- Lightbox ---------- */
+.lightbox {
+  width: min(96vw, 84rem);
+  max-height: 92vh;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.lightbox::backdrop { background: var(--overlay); }
+.lightbox img { max-height: 92vh; width: auto; margin-inline: auto; }
+
+/* ---------- Video facade ---------- */
+.facade {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  aspect-ratio: 16 / 9;
+}
+.facade img { width: 100%; height: 100%; object-fit: cover; }
+.facade::after {
+  content: "▶";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-content: center;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--overlay);
+  color: var(--ink-invert);
+  font-size: var(--step-1);
+}
+.embed { aspect-ratio: 16 / 9; }
+.embed iframe { width: 100%; height: 100%; border: 0; }
+
+/* ---------- Motion ---------- */
+.reveal { opacity: 0; translate: 0 1.5rem; transition: opacity 700ms ease, translate 700ms ease; }
+.reveal[data-visible="true"] { opacity: 1; translate: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal { opacity: 1; translate: none; transition: none; }
+}
+
+/* No-JS fallback. A <button> cannot drive :target, so instead of a broken
+   toggle the nav simply renders as a plain static list. Nothing to click,
+   nothing to trap, fully keyboard accessible. */
+.no-js .nav-toggle,
+.no-js .nav-close { display: none; }
+
+.no-js .nav-overlay {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-m);
+  padding: var(--space-m);
+  border-block-start: 1px solid var(--line);
+}
+.no-js .nav-overlay a { font-family: var(--font-body); font-size: var(--step-1); }
