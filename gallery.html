@@ -1,149 +1,202 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nikol Tsvetanova — Gallery</title>
-	
- <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-	
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-	
-<script type="text/javascript" src="nikolScript.js"> </script>
-	
-<link href="type.css" rel="stylesheet" type="text/css">
-	
-<script src="https://kit.fontawesome.com/a14b62b4f3.js" crossorigin="anonymous"></script>
-	
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Arsenal:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-
-
-<link rel="stylesheet" href="https://use.typekit.net/tou3ekn.css">
-	
-	
+<link rel="stylesheet" href="/assets/css/site.css">
+<script type="module" src="/assets/js/site.js"></script>
 </head>
+<body>
 
-	
-	
-<body style="background-color:#DCDCDC">
+<a class="skip-link" href="#main">Skip to content</a>
 
-	
-<header>
-
-	<div class="mobile_navigation"> 
-		<img class="mobile_logo" src="IMAGES/NT LOGO.png" alt="">
-	</div>
-			
-	
+<header class="wrap">
+  <p class="display"><a href="/" style="text-decoration:none">Nikol Tsvetanova</a></p>
 </header>
 
-	
-	
-	
-<div class="menu_container"> 
-	<div class="close_button">
-        <a class="exit" href="">x</a>
-  </div>		
-   <div class="mobile_items">
-	    <a class="menu_item" href="index.html">Home</a>
-        <a class="menu_item" href="about.html">About</a>
-		<a class="menu_item" href="headshots.html">Headshots</a>
-		<a class="menu_item" href="gallery.html">Gallery</a>  
-    </div>
-</div>     
-	
+<nav class="site-nav" aria-label="Primary">
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+  <div class="nav-overlay" id="menu" data-open="false">
+    <button class="nav-close" type="button" aria-label="Close menu">×</button>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/reel">Reel</a>
+    <a href="/assets/docs/nikol-tsvetanova-resume.pdf" target="_blank" rel="noopener">
+      Resume <span aria-hidden="true">↗</span>
+      <span class="visually-hidden">(opens the PDF in a new tab)</span>
+    </a>
+    <a href="/gallery" aria-current="page">Gallery</a>
+  </div>
+</nav>
 
-	
-<div class="mobile_gallery">
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G1.jpg" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G2.jpg" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G3.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="half_img">
-	 	<img class="half_img_content" src="IMAGES/NT_G4.jpg" alt="">
-	</div>
-	<div class="half_img">
-	 	<img class="half_img_content" src="IMAGES/NT_G5.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G6.jpg" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G7.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G9.jpg" alt="">
-	</div>
-	
-	<div class="half_img">
-	 	<img class="half_img_content" src="IMAGES/NT_G8.jpg" alt="">
-	</div>
-	<div class="half_img">
-	 	<img class="half_img_content" src="IMAGES/NT_G10.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G11.jpg" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G12.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G13.jpg" style="filter: grayscale()" alt="">
-	</div>
-	<div class="full_img">
-	 	<img class="full_img_content" src="IMAGES/NT_G14.jpg" alt="">
-	</div>
-	
-</div>	
+<main id="main" class="wrap">
+  <h1 class="section-title">Gallery</h1>
 
-<br><br><br>
-	
-	<p class="mobile_copyright">Photos by DJ Fralin, Zoë Markwalter, and Morgan Williamson.</p>
+  <div class="grid-gallery is-wide reveal" style="margin-block-start: var(--space-l)">
+    <figure class="figure">
+      <a href="/assets/img/gallery-01-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova stands behind a chain-link fence in a gray sweater, autumn foliage blurred behind her, in a scene from String Theory.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-01-640.avif 640w, /assets/img/gallery-01-1280.avif 1280w, /assets/img/gallery-01-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-01-640.webp 640w, /assets/img/gallery-01-1280.webp 1280w, /assets/img/gallery-01-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-01-2400.jpg" width="5075" height="3792" alt="Nikol Tsvetanova stands behind a chain-link fence in a gray sweater, autumn foliage blurred behind her, in a scene from String Theory." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>String Theory</figcaption>
+    </figure>
 
-	<br><br><br>
-	
-<div class="mobile_socials">
-		<div class="mobile_social_icon">
-			<a href="https://www.instagram.com/nikoltsve/?hl=en" target="_blank">
-				<i class="fa-brands fa-square-instagram"></i>
-			</a>
-		</div>	
-		
-		<div class="mobile_social_icon">	
-			<a href="https://www.imdb.com/name/nm13031939/?ref_=ext_shr_lnk" target="_blank">
-				<img class="mobile_imdb" src="IMAGES/IMDB.png" alt="">
-			</a>
-		</div>	
-	
-		<div class="mobile_social_icon">	
-			<a  href="https://www.youtube.com/channel/UCEnJ1HoK6WWkHRKqN8v5GLw" target="_blank">
-				<i class="fa-brands fa-youtube"></i>
-			</a>
-		</div>		
-	</div>
-	<br><br><br>
-	<br><br><br>
-	
-	
-	
-	
-	
-<div class="bottom_navigation">
-	<a class="mobile_menu">+</a>
-</div>	
+    <figure class="figure">
+      <a href="/assets/img/gallery-02-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova stands close to a co-star bundled in winter coats beside a parked car at dusk, in a still from Animosity.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-02-640.avif 640w, /assets/img/gallery-02-1280.avif 1280w, /assets/img/gallery-02-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-02-640.webp 640w, /assets/img/gallery-02-1280.webp 1280w, /assets/img/gallery-02-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-02-2400.jpg" width="5075" height="3792" alt="Nikol Tsvetanova stands close to a co-star bundled in winter coats beside a parked car at dusk, in a still from Animosity." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Animosity</figcaption>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-03-2400.jpg" data-lightbox data-alt="In a scene from Sweat, Nikol Tsvetanova comforts a seated castmate at a bar counter while two others look on, shot in black and white.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-03-640.avif 640w, /assets/img/gallery-03-1280.avif 1280w, /assets/img/gallery-03-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-03-640.webp 640w, /assets/img/gallery-03-1280.webp 1280w, /assets/img/gallery-03-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-03-2400.jpg" width="5075" height="3792" alt="In a scene from Sweat, Nikol Tsvetanova comforts a seated castmate at a bar counter while two others look on, shot in black and white." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Sweat</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-04-1063.jpg" data-lightbox data-alt="Nikol Tsvetanova sits on a wooden block on a bare, concrete-stepped set, smiling upward mid-scene in Henry IV Part I.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-04-640.avif 640w, /assets/img/gallery-04-1063.avif 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-04-640.webp 640w, /assets/img/gallery-04-1063.webp 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-04-1063.jpg" width="1063" height="1580" alt="Nikol Tsvetanova sits on a wooden block on a bare, concrete-stepped set, smiling upward mid-scene in Henry IV Part I." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Henry IV Part I</figcaption>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-05-1063.jpg" data-lightbox data-alt="Nikol Tsvetanova crouches for a close-up portrait, knees drawn to her chest, wearing a beanie and a quiet half-smile.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-05-640.avif 640w, /assets/img/gallery-05-1063.avif 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-05-640.webp 640w, /assets/img/gallery-05-1063.webp 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-05-1063.jpg" width="1063" height="1580" alt="Nikol Tsvetanova crouches for a close-up portrait, knees drawn to her chest, wearing a beanie and a quiet half-smile." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-06-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova looks off to the side with a faint smile in an outdoor scene from String Theory, chain-link fencing and open fields behind her.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-06-640.avif 640w, /assets/img/gallery-06-1280.avif 1280w, /assets/img/gallery-06-2114.avif 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-06-640.webp 640w, /assets/img/gallery-06-1280.webp 1280w, /assets/img/gallery-06-2114.webp 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-06-2114.jpg" width="2114" height="1580" alt="Nikol Tsvetanova looks off to the side with a faint smile in an outdoor scene from String Theory, chain-link fencing and open fields behind her." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>String Theory</figcaption>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-07-2400.jpg" data-lightbox data-alt="In a scene from Life Is a Dream, Nikol Tsvetanova collapses backward across a raised platform, one hand pressed to her head, shot in black and white.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-07-640.avif 640w, /assets/img/gallery-07-1280.avif 1280w, /assets/img/gallery-07-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-07-640.webp 640w, /assets/img/gallery-07-1280.webp 1280w, /assets/img/gallery-07-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-07-2400.jpg" width="5075" height="3792" alt="In a scene from Life Is a Dream, Nikol Tsvetanova collapses backward across a raised platform, one hand pressed to her head, shot in black and white." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Life Is a Dream</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-08-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova rests her chin on her hand in a close-up portrait, looking away from the camera with a soft smile.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-08-640.avif 640w, /assets/img/gallery-08-1280.avif 1280w, /assets/img/gallery-08-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-08-640.webp 640w, /assets/img/gallery-08-1280.webp 1280w, /assets/img/gallery-08-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-08-2400.jpg" width="2550" height="3792" alt="Nikol Tsvetanova rests her chin on her hand in a close-up portrait, looking away from the camera with a soft smile." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-09-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova stands alone under a single stage light, gesturing mid-speech in a solo moment from Henry IV Part I.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-09-640.avif 640w, /assets/img/gallery-09-1280.avif 1280w, /assets/img/gallery-09-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-09-640.webp 640w, /assets/img/gallery-09-1280.webp 1280w, /assets/img/gallery-09-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-09-2400.jpg" width="5075" height="3792" alt="Nikol Tsvetanova stands alone under a single stage light, gesturing mid-speech in a solo moment from Henry IV Part I." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Henry IV Part I</figcaption>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-10-1063.jpg" data-lightbox data-alt="Nikol Tsvetanova kneels in a patterned military jacket beside a castmate, both peering off-stage in a tense scene from Henry IV Part I.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-10-640.avif 640w, /assets/img/gallery-10-1063.avif 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-10-640.webp 640w, /assets/img/gallery-10-1063.webp 1063w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-10-1063.jpg" width="1063" height="1580" alt="Nikol Tsvetanova kneels in a patterned military jacket beside a castmate, both peering off-stage in a tense scene from Henry IV Part I." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Henry IV Part I</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-11-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova and a castmate share a tense exchange in period costume, an object passing between them, in a scene from Life Is a Dream.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-11-640.avif 640w, /assets/img/gallery-11-1280.avif 1280w, /assets/img/gallery-11-2114.avif 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-11-640.webp 640w, /assets/img/gallery-11-1280.webp 1280w, /assets/img/gallery-11-2114.webp 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-11-2114.jpg" width="2114" height="1580" alt="Nikol Tsvetanova and a castmate share a tense exchange in period costume, an object passing between them, in a scene from Life Is a Dream." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Life Is a Dream</figcaption>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-12-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova laughs brightly in a studio portrait, wearing a knit beanie, hands raised near her chest.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-12-640.avif 640w, /assets/img/gallery-12-1280.avif 1280w, /assets/img/gallery-12-2114.avif 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-12-640.webp 640w, /assets/img/gallery-12-1280.webp 1280w, /assets/img/gallery-12-2114.webp 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-12-2114.jpg" width="2114" height="1580" alt="Nikol Tsvetanova laughs brightly in a studio portrait, wearing a knit beanie, hands raised near her chest." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure is-grayscale">
+      <a href="/assets/img/gallery-13-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova embraces a castmate at a coat-closet doorway, wrapped in a plaid scarf, in a quiet scene from Attached.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-13-640.avif 640w, /assets/img/gallery-13-1280.avif 1280w, /assets/img/gallery-13-2114.avif 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-13-640.webp 640w, /assets/img/gallery-13-1280.webp 1280w, /assets/img/gallery-13-2114.webp 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-13-2114.jpg" width="2114" height="1580" alt="Nikol Tsvetanova embraces a castmate at a coat-closet doorway, wrapped in a plaid scarf, in a quiet scene from Attached." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Attached</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/gallery-14-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova sits at a lamp-lit desk with band posters on the wall behind her, a wary expression, in a scene from Animosity.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-14-640.avif 640w, /assets/img/gallery-14-1280.avif 1280w, /assets/img/gallery-14-2114.avif 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-14-640.webp 640w, /assets/img/gallery-14-1280.webp 1280w, /assets/img/gallery-14-2114.webp 2114w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-14-2114.jpg" width="2114" height="1580" alt="Nikol Tsvetanova sits at a lamp-lit desk with band posters on the wall behind her, a wary expression, in a scene from Animosity." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>Animosity</figcaption>
+    </figure>
+  </div>
+
+  <p class="caption" style="margin-block-start: var(--space-xl)">
+    Photos by DJ Fralin, Zoë Markwalter, and Morgan Williamson.
+  </p>
+</main>
+
+<footer class="wrap">
+  <p class="caption">
+    Design by <a href="https://milatsvetanova.com">Mila Tsvetanova</a>.
+    Headshots by <a href="https://osberphotos.com">Jessica Osber Photography</a>.
+  </p>
+</footer>
 
 </body>
-	
-
-	
-	
-	
-	
 </html>
-
