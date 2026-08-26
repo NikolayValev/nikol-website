@@ -1,0 +1,9 @@
+# Reel master (313 MB) — kept on disk, deliberately untracked.
+# Git cannot cheaply store or remove a file this size once committed, and this
+# reel is being replaced by a YouTube embed. Back it up outside the repo.
+IMAGES/Nikol Tsvetanova Reel.mp4
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
