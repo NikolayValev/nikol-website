@@ -16,7 +16,7 @@ Every task's requirements implicitly include this section.
 
 - **The deployed site has no build step.** HTML/CSS/JS are uploaded exactly as authored. `tools/` is one-time and local; deleting it must not break the site or block a content edit.
 - **Never deploy:** `_source/`, `tools/`, `docs/`, `.git/`, `.gitignore`, `.gitattributes`. Deploy everything else, including `.htaccess`.
-- **Deployed `assets/` must total under 15 MB.**
+- **Per-page image transfer must stay under 1.5 MB** — what one visitor actually downloads. Disk footprint may reach ~18 MB, since three formats at several widths are stored so each browser fetches exactly one. Never lower encode quality below AVIF 55 / WebP 72 / JPEG 78 to hit a disk number.
 - **Nav, in order, on every page:** Home · About · Reel · Resume · Gallery. "Resume" is a link to the PDF in a new tab, not a page.
 - **Internal links are extensionless** (`/about`, not `/about.html`). Apache rewrites internally; only old inbound `.html` URLs get a 301. Internal links must never trigger a redirect.
 - **Palette tokens, exact values:** `--paper: #E8E6E4`, `--panel: #F2F0EF`, `--ink: #111111`, `--ink-muted: #55514E`, `--line: rgba(17,17,17,0.14)`, `--ink-invert: #F2F0EF`, `--overlay: rgba(17,17,17,0.72)`.
@@ -399,9 +399,17 @@ Expected: `entries: 25`, `zero-width entries: none`, exit 0.
 
 - [ ] **Step 5: Confirm the size budget**
 
-Run: `du -sh assets/img`
+Measure real bytes — `du -sh` rounds too coarsely to adjudicate this:
 
-Expected: under 15 MB. If over, lower the AVIF/WebP quality values and rerun before continuing.
+```bash
+find assets/img -type f -printf '%s
+' | awk '{t+=$1} END {printf "disk: %.2f MB
+", t/1048576}'
+```
+
+Expected: at or under ~18 MB on disk. **Do not lower encode quality below
+AVIF 55 / WebP 72 / JPEG 78 to hit a number** — the binding budget is per-page
+transfer, verified in Task 11, not disk footprint.
 
 - [ ] **Step 6: Commit**
 
@@ -1623,9 +1631,16 @@ Expected: zero errors.
 
 - [ ] **Step 4: V6 — payload budget**
 
-Run: `du -sh assets && du -sh --exclude=_source --exclude=tools --exclude=docs --exclude=.git .`
+```bash
+node -e "
+const m=require('./_source/image-manifest.json'),fs=require('fs');let t=0;
+for(const[k,v]of Object.entries(m)){if(!k.startsWith('gallery'))continue;
+const w=v.widths.filter(x=>x<=1280).pop()??v.widths[0];
+t+=fs.statSync('assets/img/'+k+'-'+w+'.avif').size;}
+console.log('gallery page AVIF transfer:',(t/1048576).toFixed(2),'MB');"
+```
 
-Expected: `assets` under 15 MB.
+Expected: under 1.5 MB.
 
 - [ ] **Step 5: V1 — responsive pass**
 

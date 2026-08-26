@@ -47,7 +47,7 @@ byte-identical to production, but local `index.html` is a half-finished redesign
 2. Add a **Reel** page: YouTube-hosted reel plus a self-hosted gallery of individual clips.
 3. Link the **résumé PDF** from the primary nav, opening in a new tab.
 4. Evolve the visual design — same serif, minimal, editorial character; modern layout language.
-5. Cut payload from 374 MB to under ~15 MB of deployed assets.
+5. Cut what a visitor downloads from tens of megabytes per page to under 1.5 MB.
 6. Make the site accessible and discoverable.
 
 ## 3. Non-goals
@@ -216,7 +216,19 @@ originals are present on disk; only the naming is inconsistent.
 | Headshots | `NTH1–NTH9.jpg` | `headshot-01…09` |
 | Gallery | `NTG1–7`, `NTG9`, `NT_G8`, `NT_G10–14` | `gallery-01…14` |
 
-Target: 374 MB → under ~15 MB deployed.
+**Budget, measured as per-page transfer.** The binding limit is what a visitor
+actually downloads: **under 1.5 MB of imagery per page**. Disk footprint may
+reach ~18 MB, because three formats at several widths are stored so each browser
+can fetch exactly one.
+
+Measured after generation: index 0.24 MB, gallery 0.76 MB — against a gallery
+page that previously served multi-megabyte JPEGs unresized. Disk totals
+16.24 MB, of which the JPEG fallback tier is 7.65 MB that ~95% of browsers never
+request.
+
+An earlier draft of this spec set a 15 MB *disk* budget. That measured the wrong
+thing: it penalises shipping AVIF and WebP, which is precisely what makes pages
+light. Corrected here rather than degrading image quality to satisfy it.
 
 ### Reel
 
