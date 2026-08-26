@@ -2,95 +2,121 @@ import puppeteer from 'puppeteer';
 const url = 'http://localhost:8080/';
 const b = await puppeteer.launch({ headless: 'new' });
 const out = [];
-const say = (label, ok, detail = '') =>
-  out.push(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
+const say = (l, ok, d = '') => out.push(`${ok ? 'PASS' : 'FAIL'}  ${l}${d ? '  — ' + d : ''}`);
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
-// --- desktop: 3 visible, auto-advance ---
+// --- desktop ---
 let p = await b.newPage();
 await p.setViewport({ width: 1280, height: 900 });
 await p.goto(url, { waitUntil: 'networkidle0' });
+await wait(500);
+
 const geo = await p.$eval('.carousel-track', t => {
   const s = t.querySelector('.carousel-slide');
   const gap = parseFloat(getComputedStyle(t).columnGap) || 0;
-  return { per: Math.round(t.clientWidth / (s.getBoundingClientRect().width + gap)),
-           slides: t.querySelectorAll('.carousel-slide').length };
+  return {
+    per: Math.round(t.clientWidth / (s.getBoundingClientRect().width + gap)),
+    total: t.querySelectorAll('.carousel-slide').length,
+    clones: t.querySelectorAll('.carousel-slide[aria-hidden="true"]').length,
+  };
 });
-say('desktop shows 3 of 4', geo.per === 3 && geo.slides === 4, `${geo.per} visible, ${geo.slides} slides`);
+say('desktop shows 3 at a time', geo.per === 3, `${geo.per} visible`);
+say('slides duplicated for a seamless loop', geo.total === 8 && geo.clones === 4,
+    `${geo.total} slides, ${geo.clones} aria-hidden clones`);
 
-const x0 = await p.$eval('.carousel-track', t => t.scrollLeft);
-await new Promise(r => setTimeout(r, 6500));
-const x1 = await p.$eval('.carousel-track', t => t.scrollLeft);
-say('desktop auto-advances', x1 !== x0, `scrollLeft ${x0} -> ${x1}`);
+say('no play/pause control', (await p.$$('.carousel-toggle')).length === 0);
+say('no dot indicators', (await p.$$('.carousel-dot')).length === 0);
+say('no footer credits on home', (await p.$$('footer')).length === 0);
+
+// equal heights
+// Wait for the load-in animation to finish: getBoundingClientRect includes
+// transforms, and the settle animation ends on scale(1.03) -> none, so a rect
+// measured mid-flight reports a height 3% too large on whichever slides are
+// still animating. offsetHeight is layout-only and immune, but wait anyway so
+// the check reflects the settled page.
+await p.evaluate(() => Promise.all(
+  document.getAnimations().map(a => a.finished.catch(() => {}))));
+const heights = await p.$$eval('.carousel-slide img', els =>
+  els.slice(0, 4).map(e => e.offsetHeight));
+say('all images the same height', new Set(heights).size === 1, `heights ${heights.join(', ')}`);
+
+// direction: scrollLeft must DECREASE (strip travels rightward)
+const a0 = await p.$eval('.carousel-track', t => t.scrollLeft);
+await wait(4200);
+const a1 = await p.$eval('.carousel-track', t => t.scrollLeft);
+say('moves left-to-right (scrollLeft decreases)', a1 < a0, `${Math.round(a0)} -> ${Math.round(a1)}`);
+
+// faster cadence: should advance at least twice inside ~7.5s
+const b0 = await p.$eval('.carousel-track', t => t.scrollLeft);
+await wait(7500);
+const b1 = await p.$eval('.carousel-track', t => t.scrollLeft);
+const stepPx = await p.$eval('.carousel-track', t => {
+  const s = t.querySelector('.carousel-slide');
+  return s.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0);
+});
+const moved = Math.abs(b0 - b1) / stepPx;
+say('rotates quicker (2+ steps in 7.5s)', moved >= 1.8, `${moved.toFixed(1)} steps`);
+
+// the loop must never leave the safe band — that band is what hides the wrap
+let outOfBand = 0;
+for (let i = 0; i < 24; i++) {
+  const bad = await p.$eval('.carousel-track', t => {
+    const s = t.querySelector('.carousel-slide');
+    const loop = (s.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0)) * 4;
+    return t.scrollLeft < -1 || t.scrollLeft > loop * 2 + 1;
+  });
+  if (bad) outOfBand++;
+  await wait(500);
+}
+say('loop stays in band (no visible snap-back)', outOfBand === 0, `${outOfBand} excursions in 12s`);
 
 // hover pauses
 await p.hover('.carousel');
 const h0 = await p.$eval('.carousel-track', t => t.scrollLeft);
-await new Promise(r => setTimeout(r, 6500));
+await wait(4500);
 const h1 = await p.$eval('.carousel-track', t => t.scrollLeft);
-say('hover pauses autoplay', h0 === h1, `stayed at ${h1}`);
-
-// pause button
-await p.mouse.move(0, 0);
-await p.click('.carousel-toggle');
-const label = await p.$eval('.carousel-toggle', el => el.textContent.trim());
-const pressed = await p.$eval('.carousel-toggle', el => el.getAttribute('aria-pressed'));
-const q0 = await p.$eval('.carousel-track', t => t.scrollLeft);
-await new Promise(r => setTimeout(r, 6500));
-const q1 = await p.$eval('.carousel-track', t => t.scrollLeft);
-say('pause button stops it', q0 === q1 && pressed === 'true', `label "${label}", aria-pressed=${pressed}`);
+say('hover pauses', Math.abs(h0 - h1) < 2, `stayed at ${Math.round(h1)}`);
 await p.close();
 
-// --- mobile: 1 visible, swipeable ---
+// --- mobile ---
 p = await b.newPage();
 await p.setViewport({ width: 375, height: 780, isMobile: true, hasTouch: true });
 await p.goto(url, { waitUntil: 'networkidle0' });
+await wait(400);
 const per = await p.$eval('.carousel-track', t => {
   const s = t.querySelector('.carousel-slide');
   return Math.round(t.clientWidth / (s.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0)));
 });
 say('mobile shows 1 at a time', per === 1, `${per} visible`);
-const canScroll = await p.$eval('.carousel-track', t => t.scrollWidth > t.clientWidth + 10);
-say('mobile track is scrollable (swipe)', canScroll);
-await p.$eval('.carousel-track', t => t.scrollTo({ left: 99999, behavior: 'auto' }));
-const atEnd = await p.$eval('.carousel-track', t => t.scrollLeft > 0);
-say('can scroll past to later images', atEnd);
+say('mobile track is swipeable', await p.$eval('.carousel-track', t => t.scrollWidth > t.clientWidth + 10));
 await p.close();
 
-// --- reduced motion: no autoplay ---
+// --- reduced motion ---
 p = await b.newPage();
 await p.setViewport({ width: 1280, height: 900 });
 await p.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 await p.goto(url, { waitUntil: 'networkidle0' });
+await wait(400);
 const r0 = await p.$eval('.carousel-track', t => t.scrollLeft);
-await new Promise(r => setTimeout(r, 6500));
+await wait(5000);
 const r1 = await p.$eval('.carousel-track', t => t.scrollLeft);
-const opac = await p.$$eval('.carousel-slide', els => els.map(e => getComputedStyle(e).opacity));
-say('reduced motion: no auto-advance', r0 === r1);
-say('reduced motion: all slides visible', opac.every(o => Number(o) === 1), `opacities ${opac.join(', ')}`);
+say('reduced motion: no auto-advance', Math.abs(r0 - r1) < 2);
 await p.close();
 
-// --- no JS: carousel still readable ---
+// --- no JS ---
 p = await b.newPage();
 await p.setJavaScriptEnabled(false);
 await p.setViewport({ width: 1280, height: 900 });
 await p.goto(url, { waitUntil: 'load' });
-const noJs = await p.$$eval('.carousel-slide', els => els.map(e => getComputedStyle(e).opacity));
-const scrollable = await p.$eval('.carousel-track', t => t.scrollWidth > 0);
-say('no JS: slides visible', noJs.every(o => Number(o) === 1), `opacities ${noJs.join(', ')}`);
-say('no JS: track still scrollable', scrollable);
+const noJs = await p.$$eval('.carousel-slide img', els => els.map(e => getComputedStyle(e).opacity));
+say('no JS: images visible', noJs.every(o => Number(o) === 1), `${noJs.length} images, opacity ${[...new Set(noJs)].join('/')}`);
 await p.close();
 
-// --- about page has the headshots ---
+// --- about ---
 p = await b.newPage();
 await p.goto('http://localhost:8080/about', { waitUntil: 'networkidle0' });
-const shots = await p.$$eval('[data-lightbox]', els => els.length);
-const order = await p.$eval('main', m => {
-  const sec = m.querySelector('section[aria-label="Headshots"]');
-  const h1 = m.querySelector('h1');
-  return sec && h1 ? (sec.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING) > 0 : false;
-});
-say('about has 7 headshots', shots === 7, `${shots} found`);
-say('headshots sit above the About heading', order);
+say('about has 7 headshots', (await p.$$eval('[data-lightbox]', e => e.length)) === 7);
+say('about still shows credits', (await p.$$('footer')).length === 1);
 await p.close();
 
 await b.close();

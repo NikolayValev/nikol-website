@@ -145,56 +145,55 @@ function initCarousel() {
   if (!carousel) return;
 
   const track = carousel.querySelector('.carousel-track');
-  const slides = [...carousel.querySelectorAll('.carousel-slide')];
-  const dots = [...carousel.querySelectorAll('.carousel-dot')];
-  const toggle = carousel.querySelector('.carousel-toggle');
-  if (!track || slides.length === 0) return;
+  const originals = [...carousel.querySelectorAll('.carousel-slide')];
+  if (!track || originals.length === 0) return;
 
-  const DELAY = 5000;
-  const RESUME_AFTER = 6000;
+  const DELAY = 3200;
+  const RESUME_AFTER = 5000;
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Duplicate the slides once. Because the second copy is identical to the
+  // first, jumping the scroll position by exactly one loop width is invisible,
+  // which is what makes continuous one-direction motion possible without the
+  // strip ever visibly snapping back.
+  for (const slide of originals) {
+    const clone = slide.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    track.append(clone);
+  }
 
   let timer = null;
   let resumeTimer = null;
-  let paused = calm.matches;   // never auto-advance when motion is unwelcome
-
-  // Which slide is at the left edge. Derived from scroll position rather than
-  // tracked in a variable, so a swipe and an auto-advance can never disagree.
-  const currentIndex = () => {
-    const step = slides[0].getBoundingClientRect().width + gap();
-    return step > 0 ? Math.round(track.scrollLeft / step) : 0;
-  };
 
   const gap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
+  const step = () => originals[0].getBoundingClientRect().width + gap();
+  const loopWidth = () => step() * originals.length;
 
-  // How many slides fit at once: 1 on mobile, 3 on desktop. Read from layout
-  // rather than from a breakpoint constant, so CSS stays the single source.
-  const perView = () => {
-    const step = slides[0].getBoundingClientRect().width + gap();
-    return step > 0 ? Math.max(1, Math.round(track.clientWidth / step)) : 1;
-  };
+  function normalize() {
+    const loop = loopWidth();
+    if (loop <= 0) return;
+    if (track.scrollLeft < 1) track.scrollLeft += loop;
+    else if (track.scrollLeft >= loop * 2 - 1) track.scrollLeft -= loop;
+  }
 
-  const lastIndex = () => Math.max(0, slides.length - perView());
-
-  function goTo(index, smooth = true) {
-    const step = slides[0].getBoundingClientRect().width + gap();
+  // Moves the strip rightward: scrollLeft decreases, so each new image enters
+  // from the left edge.
+  function advance() {
+    const distance = step();
+    if (distance <= 0) return;
+    if (track.scrollLeft - distance < 1) {
+      track.scrollLeft += loopWidth();   // instant, and visually identical
+    }
     track.scrollTo({
-      left: index * step,
-      behavior: smooth && !calm.matches ? 'smooth' : 'auto',
+      left: track.scrollLeft - distance,
+      behavior: calm.matches ? 'auto' : 'smooth',
     });
   }
 
-  function advance() {
-    const next = currentIndex() >= lastIndex() ? 0 : currentIndex() + 1;
-    goTo(next);
-  }
-
   function play() {
-    if (paused || calm.matches) return;
+    if (calm.matches) return;
     stop();
     timer = setInterval(advance, DELAY);
-    toggle?.setAttribute('aria-pressed', 'false');
-    if (toggle) toggle.textContent = 'Pause';
   }
 
   function stop() {
@@ -202,82 +201,44 @@ function initCarousel() {
     timer = null;
   }
 
-  // A deliberate pause stays paused. An incidental one (hover, swipe) resumes.
+  // Hover, focus, and touch all hand control to the visitor. There is no
+  // on-screen pause control by design, so these are the pause mechanism.
   function hold() {
     stop();
     clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => {
-      if (!paused) play();
-    }, RESUME_AFTER);
+    resumeTimer = setTimeout(play, RESUME_AFTER);
   }
 
-  function markInView() {
-    const left = track.scrollLeft - 1;
-    const right = left + track.clientWidth + 2;
-    const step = slides[0].getBoundingClientRect().width + gap();
-    slides.forEach((slide, i) => {
-      const start = i * step;
-      slide.dataset.inView = String(start >= left && start < right);
-    });
-    const index = currentIndex();
-    dots.forEach((dot, i) => {
-      dot.setAttribute('aria-current', String(i === index));
-    });
-  }
-
-  toggle?.addEventListener('click', () => {
-    paused = !paused;
-    if (paused) {
-      stop();
-      clearTimeout(resumeTimer);
-      toggle.setAttribute('aria-pressed', 'true');
-      toggle.textContent = 'Play';
-    } else {
-      play();
-    }
-  });
-
-  dots.forEach((dot, i) => {
-    dot.addEventListener('click', () => {
-      goTo(Math.min(i, lastIndex()));
-      hold();
-    });
-  });
-
-  // Hover and keyboard focus pause; they do not count as a deliberate stop.
   carousel.addEventListener('pointerenter', stop);
-  carousel.addEventListener('pointerleave', () => { if (!paused) play(); });
+  carousel.addEventListener('pointerleave', play);
   carousel.addEventListener('focusin', stop);
-  carousel.addEventListener('focusout', () => { if (!paused) play(); });
-
-  // A swipe is the visitor taking over. Give them the wheel for a while.
+  carousel.addEventListener('focusout', play);
   track.addEventListener('pointerdown', hold);
   track.addEventListener('touchstart', hold, { passive: true });
+  track.addEventListener('scroll', normalize, { passive: true });
 
-  track.addEventListener('scroll', markInView, { passive: true });
-  addEventListener('resize', markInView, { passive: true });
+  addEventListener('resize', () => {
+    stop();
+    track.scrollLeft = loopWidth();
+    if (!calm.matches) play();
+  }, { passive: true });
 
   // Nothing is gained by advancing a carousel nobody can see.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();
-    else if (!paused) play();
+    else play();
   });
 
   calm.addEventListener('change', (event) => {
-    if (event.matches) {
-      paused = true;
-      stop();
-      slides.forEach((s) => { s.dataset.inView = 'true'; });
-    }
+    if (event.matches) stop();
+    else play();
   });
 
-  markInView();
-  if (calm.matches) {
-    slides.forEach((s) => { s.dataset.inView = 'true'; });
-    if (toggle) toggle.hidden = true;   // nothing is moving to pause
-  } else {
+  // Start one loop in, so there is room to travel leftward before wrapping.
+  requestAnimationFrame(() => {
+    track.scrollLeft = loopWidth();
     play();
-  }
+  });
 }
 
 function initReveal() {
