@@ -246,7 +246,9 @@ Generates every optimized image and normalizes filenames. Originals are **copied
 
 **Interfaces:**
 - Consumes: `tools/check-links.mjs` from Task 1.
-- Produces: for each role/index, files named `assets/img/<role>-<nn>-<width>.<ext>` where role ∈ {`hero`, `headshot`, `gallery`}, width ∈ {640, 1280, 2400}, ext ∈ {`avif`, `webp`, `jpg`}. Later tasks reference exactly these names.
+- Produces: for each role/index, files named `assets/img/<role>-<nn>-<width>.<ext>` where role ∈ {`hero`, `headshot`, `gallery`}, ext ∈ {`avif`, `webp`, `jpg`}, and width ∈ {640, 1280, 2400} **limited to widths not exceeding the source** — sources vary from 1063px to 5075px wide, so not every image has every width.
+- Produces: `assets/img/<role>-<nn>-full.<ext>` for **every** image, at `min(sourceWidth, 2400)`. Any reference needing a single largest URL (lightbox hrefs, `og:image`) uses `-full.jpg`, which always exists.
+- Produces: `_source/image-manifest.json`, mapping each name to `{ "width", "height", "widths": [...] }`. **Tasks 5, 7, 8 read this file** to build `srcset` lists and exact `width`/`height` attributes. It is committed, so a later task never depends on console output from an earlier one.
 
 - [ ] **Step 1: Copy originals into `_source/`**
 
@@ -285,7 +287,7 @@ Create `tools/optimize-images.mjs`. The rename map is explicit because source na
 #!/usr/bin/env node
 // One-time image optimization. Reads _source/images, writes assets/img.
 // Run again only when source images change. Not part of any deploy.
-import { mkdir, readdir, stat } from 'node:fs/promises';
+import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import sharp from 'sharp';
 
@@ -300,15 +302,15 @@ const RENAMES = [
   ['NT2.jpg', 'hero-02'],
   ['NT3.jpg', 'hero-03'],
   ['NT4.jpg', 'hero-04'],
+  // NTH6.jpg and NTH9.jpg are 72x72 placeholder thumbnails, not headshots.
+  // They are deliberately excluded; there are 7 usable headshots, not 9.
   ['NTH1.jpg', 'headshot-01'],
   ['NTH2.jpg', 'headshot-02'],
   ['NTH3.jpg', 'headshot-03'],
   ['NTH4.jpg', 'headshot-04'],
   ['NTH5.jpg', 'headshot-05'],
-  ['NTH6.jpg', 'headshot-06'],
-  ['NTH7.jpg', 'headshot-07'],
-  ['NTH8.jpg', 'headshot-08'],
-  ['NTH9.jpg', 'headshot-09'],
+  ['NTH7.jpg', 'headshot-06'],
+  ['NTH8.jpg', 'headshot-07'],
   ['NTG1.jpg', 'gallery-01'],
   ['NTG2.jpg', 'gallery-02'],
   ['NTG3.jpg', 'gallery-03'],
@@ -334,32 +336,44 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-const dimensions = {};
+const manifest = {};
+
+async function emit(input, name, width, label) {
+  const pipeline = sharp(input).resize({ width, withoutEnlargement: true });
+  await pipeline.clone().avif({ quality: 55 }).toFile(join(OUT, `${name}-${label}.avif`));
+  await pipeline.clone().webp({ quality: 72 }).toFile(join(OUT, `${name}-${label}.webp`));
+  await pipeline
+    .clone()
+    .jpeg({ quality: 78, mozjpeg: true, progressive: true })
+    .toFile(join(OUT, `${name}-${label}.jpg`));
+}
 
 for (const [from, name] of RENAMES) {
   const input = join(SRC, from);
   const meta = await sharp(input).metadata();
-  dimensions[name] = { width: meta.width, height: meta.height };
 
-  for (const width of WIDTHS) {
-    if (width > meta.width) continue; // never upscale
-    const pipeline = sharp(input).resize({ width, withoutEnlargement: true });
-    await pipeline.clone().avif({ quality: 55 }).toFile(join(OUT, `${name}-${width}.avif`));
-    await pipeline.clone().webp({ quality: 72 }).toFile(join(OUT, `${name}-${width}.webp`));
-    await pipeline
-      .clone()
-      .jpeg({ quality: 78, mozjpeg: true, progressive: true })
-      .toFile(join(OUT, `${name}-${width}.jpg`));
-  }
-  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})`);
+  // Sources vary from 1063px to 5075px wide. Never upscale: a -2400 variant
+  // of a 1063px original would be a blurry lie, and markup that assumed one
+  // existed would 404.
+  const widths = WIDTHS.filter((w) => w <= meta.width);
+  for (const width of widths) await emit(input, name, width, String(width));
+
+  // -full always exists, whatever the source size, so lightbox hrefs and
+  // og:image can reference one predictable URL per image.
+  const fullWidth = Math.min(meta.width, 2400);
+  await emit(input, name, fullWidth, 'full');
+
+  manifest[name] = { width: meta.width, height: meta.height, widths };
+  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})  widths: ${widths.join(', ') || 'none'} + full@${fullWidth}`);
 }
 
-// Intrinsic dimensions are printed so markup can carry exact width/height,
-// which is what prevents cumulative layout shift.
-console.log('\nIntrinsic dimensions for markup:');
-for (const [name, d] of Object.entries(dimensions)) {
-  console.log(`  ${name}: width="${d.width}" height="${d.height}"`);
-}
+// Written to disk rather than printed: Tasks 5, 7, 8 are implemented by
+// separate agents that cannot see this run's console output.
+await writeFile(
+  join(ROOT, '_source', 'image-manifest.json'),
+  `${JSON.stringify(manifest, null, 2)}\n`,
+);
+console.log('\nwrote _source/image-manifest.json');
 
 let total = 0;
 for (const f of await readdir(OUT)) total += (await stat(join(OUT, f))).size;
@@ -368,9 +382,17 @@ console.log(`\nassets/img total: ${(total / 1024 / 1024).toFixed(2)} MB`);
 
 - [ ] **Step 4: Run it and record the output**
 
-Run: `node tools/optimize-images.mjs | tee /tmp/image-dimensions.txt`
+Run: `node tools/optimize-images.mjs`
 
-Expected: 27 mappings printed, no "Missing source images" error, and a total well under 15 MB. **Save the intrinsic dimensions block** — Tasks 5, 7 need the exact `width`/`height` values.
+Expected: **25** mappings printed (4 hero + 7 headshot + 14 gallery), no "Missing source images" error, and a total well under 15 MB.
+
+Then confirm the manifest is usable — Tasks 5, 7, 8 depend on it:
+
+```bash
+node -e "const m=require('./_source/image-manifest.json');const n=Object.keys(m).length;const bad=Object.entries(m).filter(([,v])=>v.widths.length===0);console.log('entries:',n);console.log('zero-width entries:',bad.map(([k])=>k).join(', ')||'none');if(n!==25||bad.length)process.exit(1)"
+```
+
+Expected: `entries: 25`, `zero-width entries: none`, exit 0.
 
 - [ ] **Step 5: Confirm the size budget**
 
@@ -728,6 +750,7 @@ Delivers the nav and behavior layer, proven on `index.html`. This is the first t
 
 **Files:**
 - Create: `assets/js/site.js`
+- Create: `reel.html` (stub — Task 8 fills in the content)
 - Modify: `index.html` (full rewrite)
 
 **Interfaces:**
@@ -933,13 +956,27 @@ On `index.html` the header keeps the `<h1>`, because the home page's most import
 </html>
 ```
 
-- [ ] **Step 3: Run the link checker**
+- [ ] **Step 3: Create the reel.html stub**
+
+The nav links to `/reel` on every page from here on, so the file must exist or
+the link checker fails for Tasks 4 through 7. Create `reel.html` now using the
+exact shell from Step 2 — `aria-current="page"` on the Reel link,
+`<title>Nikol Tsvetanova — Reel</title>` — with a placeholder main:
+
+```html
+<main id="main" class="wrap">
+  <h1 class="section-title">Reel</h1>
+  <p class="prose" style="margin-block-start: var(--space-l)">Placeholder — content lands in Task 8.</p>
+</main>
+```
+
+- [ ] **Step 4: Run the link checker**
 
 Run: `node tools/check-links.mjs`
 
-Expected: the `index.html` references all resolve. `gallery.html` and `headshots.html` still fail with their P13 mismatches — those are fixed in Tasks 7 and 11. Note the remaining failure count so you can confirm it shrinks.
+Expected: `index.html` and `reel.html` references all resolve. `gallery.html` and `headshots.html` still fail with their P13 mismatches — those are fixed in Tasks 7 and 11. Note the remaining failure count so you can confirm it shrinks.
 
-- [ ] **Step 4: Verify the nav by hand**
+- [ ] **Step 5: Verify the nav by hand**
 
 Run `node tools/serve.mjs`, open `http://localhost:8080/`, and confirm all of:
 
@@ -950,10 +987,10 @@ Run `node tools/serve.mjs`, open `http://localhost:8080/`, and confirm all of:
 5. The Resume link opens the PDF in a new tab.
 6. `Tab` from page load reveals the "Skip to content" link.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add assets/js/site.js index.html
+git add assets/js/site.js index.html reel.html
 git commit -m "Add shared shell: responsive nav and behavior module
 
 Replaces jQuery with a ~120-line module covering nav, lightbox, video
@@ -970,12 +1007,29 @@ announces the new tab to screen readers."
 - Modify: `index.html` (replace `<main>`)
 
 **Interfaces:**
-- Consumes: shell from Task 4; `hero-01..04` and `headshot-01..09` images from Task 2.
+- Consumes: shell from Task 4; `hero-01..04` and `headshot-01..07` images from Task 2; `_source/image-manifest.json` from Task 2.
 - Produces: the `<picture>` + `.figure` markup pattern reused in Tasks 7 and 8.
 
 - [ ] **Step 1: Replace `<main>` with hero and headshot sections**
 
-Substitute the real `width`/`height` values recorded in Task 2 Step 4 for every `WIDTH`/`HEIGHT` below. Repeat the `<figure>` block for `hero-02` through `hero-04`, and for `headshot-01` through `headshot-09`.
+**Read `_source/image-manifest.json` first.** For each image it gives
+`width`, `height`, and `widths` — the variants that actually exist. Two rules
+follow from it, and violating either produces a 404 the link checker will catch:
+
+1. `width`/`height` attributes use the manifest's exact values for that image.
+2. `srcset` lists **only** the widths in that image's `widths` array. Sources
+   range from 1063px to 5075px wide, so some images have all of 640/1280/2400
+   and some have only 640.
+
+Single-URL references always use `-full.jpg`, which exists for every image
+regardless of source size. That means both the lightbox `href` **and** the
+`<img src>` fallback inside each `<picture>` — a hardcoded `-1280.jpg` fallback
+404s on any source narrower than 1280px, and three gallery sources are 1063px.
+
+Repeat the `<figure>` block for `hero-02` through `hero-04`, and for
+`headshot-01` through `headshot-07`. **There are 7 headshots, not 9** — the
+source files `NTH6.jpg` and `NTH9.jpg` are 72x72 placeholder thumbnails and are
+excluded by Task 2.
 
 ```html
 <main id="main">
@@ -985,7 +1039,7 @@ Substitute the real `width`/`height` values recorded in Task 2 Step 4 for every 
         <picture>
           <source type="image/avif" srcset="/assets/img/hero-01-640.avif 640w, /assets/img/hero-01-1280.avif 1280w, /assets/img/hero-01-2400.avif 2400w" sizes="(min-width: 64em) 25vw, 50vw">
           <source type="image/webp" srcset="/assets/img/hero-01-640.webp 640w, /assets/img/hero-01-1280.webp 1280w, /assets/img/hero-01-2400.webp 2400w" sizes="(min-width: 64em) 25vw, 50vw">
-          <img src="/assets/img/hero-01-1280.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in performance." fetchpriority="high" decoding="async">
+          <img src="/assets/img/hero-01-full.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in performance." fetchpriority="high" decoding="async">
         </picture>
       </figure>
       <!-- hero-02, hero-03, hero-04: identical, but loading="lazy" and no fetchpriority -->
@@ -996,7 +1050,7 @@ Substitute the real `width`/`height` values recorded in Task 2 Step 4 for every 
     <h2 id="headshots-title" class="section-title">Headshots</h2>
     <div class="grid-gallery reveal" style="margin-block-start: var(--space-l)">
       <figure class="figure">
-        <a href="/assets/img/headshot-01-2400.jpg" data-lightbox data-alt="Headshot of Nikol Tsvetanova.">
+        <a href="/assets/img/headshot-01-full.jpg" data-lightbox data-alt="Headshot of Nikol Tsvetanova.">
           <picture>
             <source type="image/avif" srcset="/assets/img/headshot-01-640.avif 640w, /assets/img/headshot-01-1280.avif 1280w" sizes="(min-width: 64em) 33vw, 50vw">
             <source type="image/webp" srcset="/assets/img/headshot-01-640.webp 640w, /assets/img/headshot-01-1280.webp 1280w" sizes="(min-width: 64em) 33vw, 50vw">
@@ -1004,7 +1058,7 @@ Substitute the real `width`/`height` values recorded in Task 2 Step 4 for every 
           </picture>
         </a>
       </figure>
-      <!-- headshot-02 .. headshot-09: identical pattern -->
+      <!-- headshot-02 .. headshot-07: identical pattern, srcset per manifest -->
     </div>
     <p class="caption" style="margin-block-start: var(--space-m)">
       Headshots by <a href="https://osberphotos.com">Jessica Osber Photography</a>.
@@ -1019,7 +1073,10 @@ Substitute the real `width`/`height` values recorded in Task 2 Step 4 for every 
 
 Run: `node tools/check-links.mjs`
 
-Expected: every `index.html` reference resolves, including all `srcset` candidates.
+Expected: every `index.html` reference resolves, including all `srcset`
+candidates. A `MISSING` line naming a `-2400` or `-1280` variant means the
+srcset listed a width that image does not have — re-read the manifest for that
+image rather than generating the missing file.
 
 - [ ] **Step 3: Verify layout and lightbox**
 
@@ -1106,7 +1163,7 @@ fonts become text links, dropping the FontAwesome kit."
 - Modify: `gallery.html` (full rewrite)
 
 **Interfaces:**
-- Consumes: shell from Task 4; `gallery-01..14` from Task 2; `.figure` pattern from Task 5.
+- Consumes: shell from Task 4; `gallery-01..14` from Task 2; `_source/image-manifest.json`; `.figure` pattern from Task 5.
 - Produces: nothing later tasks depend on.
 
 Captions and grayscale treatments below are taken from the current production markup, so nothing is invented.
@@ -1130,7 +1187,13 @@ Captions and grayscale treatments below are taken from the current production ma
 
 - [ ] **Step 1: Rewrite the page**
 
-Task 4 shell, `aria-current="page"` on Gallery, `<title>Nikol Tsvetanova — Gallery</title>`. Repeat this figure for all 14 rows, adding `class="figure is-grayscale"` where the table says yes, and omitting `<figcaption>` where the caption is `—`:
+Task 4 shell, `aria-current="page"` on Gallery, `<title>Nikol Tsvetanova — Gallery</title>`. Repeat this figure for all 14 rows, adding `class="figure is-grayscale"` where the table says yes, and omitting `<figcaption>` where the caption is `—`.
+
+**Read `_source/image-manifest.json` first**, exactly as Task 5 does: `srcset`
+lists only the widths that image actually has, `width`/`height` come from the
+manifest, and the lightbox `href` uses `-full.jpg`. This matters more here than
+on the index — 8 of the 14 gallery sources are under 2400px wide and three are
+only 1063px, so a copy-pasted three-width `srcset` will 404.
 
 ```html
 <main id="main" class="wrap">
@@ -1138,16 +1201,16 @@ Task 4 shell, `aria-current="page"` on Gallery, `<title>Nikol Tsvetanova — Gal
 
   <div class="grid-gallery is-wide reveal" style="margin-block-start: var(--space-l)">
     <figure class="figure">
-      <a href="/assets/img/gallery-01-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in String Theory.">
+      <a href="/assets/img/gallery-01-full.jpg" data-lightbox data-alt="Nikol Tsvetanova in String Theory.">
         <picture>
           <source type="image/avif" srcset="/assets/img/gallery-01-640.avif 640w, /assets/img/gallery-01-1280.avif 1280w, /assets/img/gallery-01-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
           <source type="image/webp" srcset="/assets/img/gallery-01-640.webp 640w, /assets/img/gallery-01-1280.webp 1280w, /assets/img/gallery-01-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
-          <img src="/assets/img/gallery-01-1280.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in String Theory." loading="lazy" decoding="async">
+          <img src="/assets/img/gallery-01-full.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in String Theory." loading="lazy" decoding="async">
         </picture>
       </a>
       <figcaption>String Theory</figcaption>
     </figure>
-    <!-- gallery-02 .. gallery-14 per the table above -->
+    <!-- gallery-02 .. gallery-14 per the table above, srcset per manifest -->
   </div>
 
   <p class="caption" style="margin-block-start: var(--space-xl)">
@@ -1183,18 +1246,22 @@ overlays, which mobile CSS hid outright, into persistent captions."
 ### Task 8: reel.html
 
 **Files:**
-- Create: `reel.html`, `tools/encode-clips.sh`
+- Modify: `reel.html` (replace the Task 4 stub's `<main>`)
+- Create: `tools/encode-clips.sh`
 - Create: `assets/video/.gitkeep`
 
 **Interfaces:**
-- Consumes: shell from Task 4; `initVideoFacade()` from Task 4.
+- Consumes: the `reel.html` stub and `initVideoFacade()` from Task 4; `_source/image-manifest.json` from Task 2.
 - Produces: the clip `<figure>` pattern to copy when clips arrive.
 
 **Gate (R5):** the YouTube video ID is required. If it is not yet known, leave `data-youtube="REEL_ID"` and treat the page as blocked from deploy — Task 12 checks this.
 
-- [ ] **Step 1: Create the page**
+- [ ] **Step 1: Replace the stub's `<main>`**
 
-Task 4 shell, `aria-current="page"` on Reel, `<title>Nikol Tsvetanova — Reel</title>`. The facade needs a poster; use `hero-02` until a dedicated frame exists.
+`reel.html` already exists from Task 4 with the correct shell and
+`aria-current="page"` on Reel. Replace only its `<main>`. The facade needs a
+poster; use `hero-02` until a dedicated frame exists, taking its `width` and
+`height` from `_source/image-manifest.json`.
 
 ```html
 <main id="main" class="wrap">
@@ -1202,7 +1269,7 @@ Task 4 shell, `aria-current="page"` on Reel, `<title>Nikol Tsvetanova — Reel</
 
   <div class="reveal" style="margin-block-start: var(--space-l)">
     <button class="facade" type="button" data-youtube="REEL_ID" data-title="Nikol Tsvetanova — acting reel">
-      <img src="/assets/img/hero-02-1280.jpg" width="WIDTH" height="HEIGHT" alt="" loading="lazy" decoding="async">
+      <img src="/assets/img/hero-02-full.jpg" width="WIDTH" height="HEIGHT" alt="" loading="lazy" decoding="async">
       <span class="visually-hidden">Play reel — Nikol Tsvetanova</span>
     </button>
     <noscript>
@@ -1306,7 +1373,7 @@ Insert into each `<head>`, changing `PAGE_PATH`, `PAGE_TITLE`, and `PAGE_DESC` p
 <meta property="og:title" content="PAGE_TITLE">
 <meta property="og:description" content="PAGE_DESC">
 <meta property="og:url" content="https://nikoltsvetanova.com/PAGE_PATH">
-<meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-1280.jpg">
+<meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-full.jpg">
 <meta name="twitter:card" content="summary_large_image">
 ```
 
@@ -1332,7 +1399,7 @@ Place before `</head>`:
   "jobTitle": "Actor",
   "nationality": "Bulgarian",
   "url": "https://nikoltsvetanova.com/",
-  "image": "https://nikoltsvetanova.com/assets/img/headshot-01-1280.jpg",
+  "image": "https://nikoltsvetanova.com/assets/img/headshot-01-full.jpg",
   "alumniOf": {
     "@type": "CollegeOrUniversity",
     "name": "SUNY Purchase"
