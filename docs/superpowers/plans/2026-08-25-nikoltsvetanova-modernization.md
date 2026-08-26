@@ -1695,9 +1695,33 @@ Expected: `PASS: all local references resolve`, exit code 0. This is the green t
 
 - [ ] **Step 3: V3 — HTML validity**
 
+First add `.htmlvalidate.json` at the repo root, so this check measures HTML
+validity rather than house style. Two of html-validate's default rules are
+stylistic preferences that this project deliberately does not follow, and
+leaving them on produces 27 failures that mean nothing:
+
+```json
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "doctype-style": "off",
+    "no-inline-style": "off"
+  }
+}
+```
+
+`doctype-style` demands an uppercase `<!DOCTYPE html>`; the doctype is
+case-insensitive in HTML5 and lowercase is valid. `no-inline-style` forbids the
+`style="margin-block-start: var(--space-m)"` spacing-token pattern this plan
+uses deliberately throughout. Neither indicates a markup defect. This file is a
+dotfile and is not deployed.
+
 Run: `npx --yes html-validate index.html about.html reel.html gallery.html 404.html`
 
-Expected: zero errors.
+Expected: zero errors. Any error that remains is a genuine markup defect —
+unclosed tag, invalid nesting, duplicate id, missing required attribute — and
+must be fixed rather than configured away. Do not disable any further rule to
+reach zero; report it instead.
 
 - [ ] **Step 4: V6 — payload budget**
 
