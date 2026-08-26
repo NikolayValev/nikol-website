@@ -8,3 +8,6 @@ IMAGES/Nikol Tsvetanova Reel.mp4
 Thumbs.db
 desktop.ini
 .superpowers/
+
+# Local one-time tooling deps (tools/ is never deployed)
+tools/node_modules/
