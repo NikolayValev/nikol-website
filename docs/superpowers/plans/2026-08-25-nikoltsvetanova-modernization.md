@@ -997,6 +997,342 @@ exact shell from Step 2 — `aria-current="page"` on the Reel link,
 `<title>Nikol Tsvetanova — Reel</title>` — with a placeholder main:
 
 ```html
+<main id="main" class="wrap">
+  <h1 class="section-title">Reel</h1>
+  <p class="prose" style="margin-block-start: var(--space-l)">Placeholder — content lands in Task 8.</p>
+</main>
+```
+
+- [ ] **Step 4: Run the link checker**
+
+Run: `node tools/check-links.mjs`
+
+Expected: `index.html` and `reel.html` references all resolve. `gallery.html` and `headshots.html` still fail with their P13 mismatches — those are fixed in Tasks 7 and 11. Note the remaining failure count so you can confirm it shrinks.
+
+- [ ] **Step 5: Verify the nav by hand**
+
+Run `node tools/serve.mjs`, open `http://localhost:8080/`, and confirm all of:
+
+1. At 1280px wide the nav is a horizontal bar at the bottom; the Menu button is hidden.
+2. At 375px the Menu button shows; clicking it opens a full-screen overlay.
+3. `Tab` cycles only within the open overlay and does not escape it.
+4. `Escape` closes the overlay and focus returns to the Menu button.
+5. The Resume link opens the PDF in a new tab.
+6. `Tab` from page load reveals the "Skip to content" link.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add assets/js/site.js index.html reel.html
+git commit -m "Add shared shell: responsive nav and behavior module
+
+Replaces jQuery with a ~120-line module covering nav, lightbox, video
+facade, and scroll reveal. Nav toggle is a real button with aria-expanded,
+Escape handling, and a focus trap. Resume is a nav link to the PDF that
+announces the new tab to screen readers."
+```
+
+---
+
+### Task 5: index.html content — hero and headshots
+
+**Files:**
+- Modify: `index.html` (replace `<main>`)
+
+**Interfaces:**
+- Consumes: shell from Task 4; `hero-01..04` and `headshot-01..07` images from Task 2; `_source/image-manifest.json` from Task 2.
+- Produces: the `<picture>` + `.figure` markup pattern reused in Tasks 7 and 8.
+
+- [ ] **Step 1: Replace `<main>` with hero and headshot sections**
+
+**Read `_source/image-manifest.json` first.** For each image it gives
+`width`, `height`, and `widths` — the variants that actually exist. Two rules
+follow from it, and violating either produces a 404 the link checker will catch:
+
+1. `width`/`height` attributes use the manifest's exact values for that image.
+2. `srcset` lists **only** the widths in that image's `widths` array. Sources
+   range from 1063px to 5075px wide, so some images have all of 640/1280/2400
+   and some have only 640.
+
+Single-URL references use **the last entry of that image's `widths` array** —
+its largest available variant. That means both the lightbox `href` **and** the
+`<img src>` fallback inside each `<picture>`. A hardcoded `-1280.jpg` fallback
+404s on any source narrower than 1280px, and three gallery sources are 1063px.
+
+Repeat the `<figure>` block for `hero-02` through `hero-04`, and for
+`headshot-01` through `headshot-07`. **There are 7 headshots, not 9** — the
+source files `NTH6.jpg` and `NTH9.jpg` are 72x72 placeholder thumbnails and are
+excluded by Task 2.
+
+```html
+<main id="main">
+  <section class="wrap" aria-label="Featured">
+    <div class="grid-gallery">
+      <figure class="figure">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/hero-01-640.avif 640w, /assets/img/hero-01-1280.avif 1280w, /assets/img/hero-01-2400.avif 2400w" sizes="(min-width: 64em) 25vw, 50vw">
+          <source type="image/webp" srcset="/assets/img/hero-01-640.webp 640w, /assets/img/hero-01-1280.webp 1280w, /assets/img/hero-01-2400.webp 2400w" sizes="(min-width: 64em) 25vw, 50vw">
+          <img src="/assets/img/hero-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in performance." fetchpriority="high" decoding="async">
+        </picture>
+      </figure>
+      <!-- hero-02, hero-03, hero-04: identical, but loading="lazy" and no fetchpriority -->
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="headshots-title" style="margin-block-start: var(--space-3xl)">
+    <h2 id="headshots-title" class="section-title">Headshots</h2>
+    <div class="grid-gallery reveal" style="margin-block-start: var(--space-l)">
+      <figure class="figure">
+        <a href="/assets/img/headshot-01-2400.jpg" data-lightbox data-alt="Headshot of Nikol Tsvetanova.">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/headshot-01-640.avif 640w, /assets/img/headshot-01-1280.avif 1280w" sizes="(min-width: 64em) 33vw, 50vw">
+            <source type="image/webp" srcset="/assets/img/headshot-01-640.webp 640w, /assets/img/headshot-01-1280.webp 1280w" sizes="(min-width: 64em) 33vw, 50vw">
+            <img src="/assets/img/headshot-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Headshot of Nikol Tsvetanova." loading="lazy" decoding="async">
+          </picture>
+        </a>
+      </figure>
+      <!-- headshot-02 .. headshot-07: identical pattern, srcset per manifest -->
+    </div>
+    <p class="caption" style="margin-block-start: var(--space-m)">
+      Headshots by <a href="https://osberphotos.com">Jessica Osber Photography</a>.
+    </p>
+  </section>
+</main>
+```
+
+"Headshots" is an `<h2>` here: on the home page the `<h1>` is her name in the header (Task 4 Step 2). Every page still has exactly one `<h1>`.
+
+- [ ] **Step 2: Run the link checker**
+
+Run: `node tools/check-links.mjs`
+
+Expected: every `index.html` reference resolves, including all `srcset`
+candidates. A `MISSING` line naming a `-2400` or `-1280` variant means the
+srcset listed a width that image does not have — re-read the manifest for that
+image rather than generating the missing file.
+
+- [ ] **Step 3: Verify layout and lightbox**
+
+With `node tools/serve.mjs` running, at 375 / 768 / 1024 / 1280 / 1920 px confirm no horizontal scrollbar and no overlap. Click a headshot: the lightbox opens, `←`/`→` step through, `Escape` closes.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "Build index: hero row and headshot grid
+
+Headshots move onto the index as a responsive grid with a lightbox,
+replacing the production slideshow whose arrows threw a TypeError on
+every click (spec P5). No slide index remains to desync."
+```
+
+---
+
+### Task 6: about.html
+
+**Files:**
+- Modify: `about.html` (full rewrite)
+
+**Interfaces:**
+- Consumes: shell from Task 4.
+- Produces: nothing later tasks depend on.
+
+- [ ] **Step 1: Rewrite the page**
+
+Use the Task 4 shell verbatim, moving `aria-current="page"` to the About link, with `<title>Nikol Tsvetanova — About</title>` and this `<main>`. The bio text is copied exactly from the current site:
+
+```html
+<main id="main" class="wrap">
+  <h1 class="section-title">About</h1>
+
+  <div class="prose" style="margin-block-start: var(--space-l)">
+    <p>Nikol Tsvetanova is a Bulgarian-born actress based in NYC. Her love of performance is inspired by her fascination with and curiosity about human behavior and psychology, and she embraces the nuances, humor, and absurdity of the human experience in her work. She writes her own material and is currently working on a play focusing on two people exploring an open relationship as a way of growing closer. In her spare time, she is a part of the oldest traditional Bulgarian folk dance group in North America (aide, Bosilek!) and delights in hot yoga, cooking, and knitting. She strives to make art that is universal yet specific, dynamic and alive, and resonates with a variety of audiences.</p>
+    <p>You can view her <a href="/assets/docs/nikol-tsvetanova-resume.pdf" target="_blank" rel="noopener">resume <span aria-hidden="true">↗</span><span class="visually-hidden">(opens the PDF in a new tab)</span></a> and her <a href="/reel">reel</a>.</p>
+  </div>
+
+  <section aria-labelledby="contact-title" style="margin-block-start: var(--space-3xl)">
+    <h2 id="contact-title" class="section-title">Contact</h2>
+    <p class="prose" style="margin-block-start: var(--space-m)">
+      Represented by Posche Talent.<br>
+      Florance Kirilova<br>
+      <a href="mailto:florance@poschemodels.com">florance@poschemodels.com</a>
+    </p>
+    <ul class="socials" style="display:flex; gap:var(--space-m); margin-block-start:var(--space-l)">
+      <li><a href="https://www.instagram.com/nikoltsve/?hl=en" target="_blank" rel="noopener">Instagram</a></li>
+      <li><a href="https://www.imdb.com/name/nm13031939/" target="_blank" rel="noopener">IMDb</a></li>
+      <li><a href="https://www.youtube.com/channel/UCEnJ1HoK6WWkHRKqN8v5GLw" target="_blank" rel="noopener">YouTube</a></li>
+    </ul>
+  </section>
+</main>
+```
+
+Social links are text, not icons — this removes the FontAwesome kit (P7) and is more legible to screen readers than icon fonts were.
+
+- [ ] **Step 2: Run the link checker**
+
+Run: `node tools/check-links.mjs`
+
+Expected: `about.html` contributes zero failures.
+
+- [ ] **Step 3: Verify**
+
+At 375 and 1280 px: text stays within a readable measure, contact section is legible, nav marks About as current.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add about.html
+git commit -m "Rebuild about page on the shared shell
+
+Single responsive markup set replacing the mobile_* duplicate. Icon
+fonts become text links, dropping the FontAwesome kit."
+```
+
+---
+
+### Task 7: gallery.html
+
+**Files:**
+- Modify: `gallery.html` (full rewrite)
+
+**Interfaces:**
+- Consumes: shell from Task 4; `gallery-01..14` from Task 2; `_source/image-manifest.json`; `.figure` pattern from Task 5.
+- Produces: nothing later tasks depend on.
+
+Captions and grayscale treatments below are taken from the current production markup, so nothing is invented.
+
+| Image | Caption | Photographer | Grayscale |
+|---|---|---|---|
+| gallery-01 | String Theory | — | no |
+| gallery-02 | Animosity | — | no |
+| gallery-03 | Sweat | DJ Fralin | yes |
+| gallery-04 | Henry IV Part I | Morgan Williamson | no |
+| gallery-05 | — | — | yes |
+| gallery-06 | String Theory | — | no |
+| gallery-07 | Life Is a Dream | Zoë Markwalter | yes |
+| gallery-08 | — | — | no |
+| gallery-09 | Henry IV Part I | Morgan Williamson | no |
+| gallery-10 | Henry IV Part I | Morgan Williamson | yes |
+| gallery-11 | Life Is a Dream | Zoë Markwalter | no |
+| gallery-12 | — | — | yes |
+| gallery-13 | Attached | — | yes |
+| gallery-14 | Animosity | — | no |
+
+- [ ] **Step 1: Rewrite the page**
+
+Task 4 shell, `aria-current="page"` on Gallery, `<title>Nikol Tsvetanova — Gallery</title>`. Repeat this figure for all 14 rows, adding `class="figure is-grayscale"` where the table says yes, and omitting `<figcaption>` where the caption is `—`.
+
+**Read `_source/image-manifest.json` first**, exactly as Task 5 does: `srcset`
+lists only the widths that image actually has, `width`/`height` come from the
+manifest, and single-URL references use that image's largest available width.
+This matters more here than
+on the index — 8 of the 14 gallery sources are under 2400px wide and three are
+only 1063px, so a copy-pasted three-width `srcset` will 404.
+
+```html
+<main id="main" class="wrap">
+  <h1 class="section-title">Gallery</h1>
+
+  <div class="grid-gallery is-wide reveal" style="margin-block-start: var(--space-l)">
+    <figure class="figure">
+      <a href="/assets/img/gallery-01-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in String Theory.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/gallery-01-640.avif 640w, /assets/img/gallery-01-1280.avif 1280w, /assets/img/gallery-01-2400.avif 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/gallery-01-640.webp 640w, /assets/img/gallery-01-1280.webp 1280w, /assets/img/gallery-01-2400.webp 2400w" sizes="(min-width: 64em) 50vw, 100vw">
+          <img src="/assets/img/gallery-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Nikol Tsvetanova in String Theory." loading="lazy" decoding="async">
+        </picture>
+      </a>
+      <figcaption>String Theory</figcaption>
+    </figure>
+    <!-- gallery-02 .. gallery-14 per the table above, srcset per manifest -->
+  </div>
+
+  <p class="caption" style="margin-block-start: var(--space-xl)">
+    Photos by DJ Fralin, Zoë Markwalter, and Morgan Williamson.
+  </p>
+</main>
+```
+
+Captions are now always visible below each image. The current site puts them in hover-only overlays that mobile CSS sets to `display: none`, so those credits are invisible on phones and to keyboard users today.
+
+- [ ] **Step 2: Run the link checker**
+
+Run: `node tools/check-links.mjs`
+
+Expected: `gallery.html` now contributes **zero** failures — the P13 mismatch is gone. Only `headshots.html` should still fail, and Task 11 deletes it.
+
+- [ ] **Step 3: Verify**
+
+At 375 / 768 / 1280 px: the grid reflows continuously with no dead zone; captions read correctly; lightbox arrows step through all 14.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add gallery.html
+git commit -m "Rebuild gallery on a reflowing grid with visible captions
+
+Resolves the P13 filename mismatch. Photo credits move out of hover-only
+overlays, which mobile CSS hid outright, into persistent captions."
+```
+
+---
+
+### Task 8: reel.html
+
+**Files:**
+- Modify: `reel.html` (replace the Task 4 stub's `<main>`)
+- Create: `tools/encode-clips.sh`
+- Create: `assets/video/.gitkeep`
+
+**Interfaces:**
+- Consumes: the `reel.html` stub and `initVideoFacade()` from Task 4; `_source/image-manifest.json` from Task 2.
+- Produces: the clip `<figure>` pattern to copy when clips arrive.
+
+**Gate R5 is CLEARED.** Two demo reels already exist on her YouTube channel:
+
+| Reel | Video ID | Poster source |
+|---|---|---|
+| Comedic Demo Reel | `22yu1JbPBBU` | `https://i.ytimg.com/vi/22yu1JbPBBU/maxresdefault.jpg` |
+| Dramatic Demo Reel | `SVTmLpR39m8` | `https://i.ytimg.com/vi/SVTmLpR39m8/maxresdefault.jpg` |
+
+The page therefore carries **two** facades, not one — standard for an actor, who
+is cast off comedic and dramatic material separately.
+
+A third video, "if you meet a stranger at a bus stop" (`N9n1wCLU7hE`), also
+exists on the channel. It is deliberately NOT placed: it is a short film rather
+than a reel or a scene clip, and where her own work belongs on her own site is
+the subject's call, not this plan's. Flag it for her.
+
+- [ ] **Step 1: Generate reel posters through the existing image pipeline**
+
+The posters are real frames from the reels themselves, so they run through the
+same optimizer as every other image rather than being special-cased. Both source
+thumbnails are 1280x720, giving widths `[640, 1280]`.
+
+```bash
+curl -sS -o "_source/images/REEL_COMEDIC.jpg" "https://i.ytimg.com/vi/22yu1JbPBBU/maxresdefault.jpg"
+curl -sS -o "_source/images/REEL_DRAMATIC.jpg" "https://i.ytimg.com/vi/SVTmLpR39m8/maxresdefault.jpg"
+```
+
+Add two rows to the `RENAMES` array in `tools/optimize-images.mjs`:
+
+```js
+  ['REEL_COMEDIC.jpg', 'reel-comedic'],
+  ['REEL_DRAMATIC.jpg', 'reel-dramatic'],
+```
+
+Re-run `node tools/optimize-images.mjs`. It is idempotent — it regenerates
+everything and rewrites the manifest. Confirm the manifest now has **27**
+entries and that `reel-comedic` and `reel-dramatic` both report
+`widths: [640, 1280]`.
+
+- [ ] **Step 2: Replace the stub's `<main>`**
+
+`reel.html` already exists from Task 4 with the correct shell and
+`aria-current="page"` on Reel. Replace only its `<main>`. Each facade uses its
+own poster generated in Step 1, with `width` and `height` taken from
+`_source/image-manifest.json`.
+
 ```html
 <main id="main" class="wrap">
   <h1 class="section-title">Reel</h1>
@@ -1043,7 +1379,7 @@ exact shell from Step 2 — `aria-current="page"` on the Reel link,
 </main>
 ```
 
-Each `alt` is empty because the visually-hidden span already labels its button; a described poster would double-announce. Note there are now three `<h2>`s and still exactly one `<h1>`.
+Each `alt` is empty because the visually-hidden span already labels its button; a described poster would double-announce. There are now three `<h2>`s and still exactly one `<h1>`.
 
 - [ ] **Step 3: Add the clip encoder for later use**
 
@@ -1440,7 +1776,7 @@ closing the P13 failure that Task 1 established as the baseline."
 
 Do not deploy while any of these is unresolved:
 
-- **R5** — cleared in Task 8; both real video IDs are embedded. Confirm no placeholder survived: `grep -nE 'REEL_ID|VIDEO_ID|PLACEHOLDER' reel.html` must produce no output.
+- **R5** — `reel.html` must not still contain `data-youtube="REEL_ID"`. Run `grep -n 'REEL_ID' reel.html`; expected: no output.
 - **R2** — Mirra's web-embedding license confirmed, or Playfair substituted.
 - **R3** — alt text and photo credits reviewed by Nikol.
 
