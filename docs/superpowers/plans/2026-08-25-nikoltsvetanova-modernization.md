@@ -1087,7 +1087,7 @@ excluded by Task 2.
           <picture>
             <source type="image/avif" srcset="/assets/img/headshot-01-640.avif 640w, /assets/img/headshot-01-1280.avif 1280w" sizes="(min-width: 64em) 33vw, 50vw">
             <source type="image/webp" srcset="/assets/img/headshot-01-640.webp 640w, /assets/img/headshot-01-1280.webp 1280w" sizes="(min-width: 64em) 33vw, 50vw">
-            <img src="/assets/img/headshot-01-640.jpg" width="WIDTH" height="HEIGHT" alt="Headshot of Nikol Tsvetanova." loading="lazy" decoding="async">
+            <img src="/assets/img/headshot-01-2400.jpg" width="WIDTH" height="HEIGHT" alt="Headshot of Nikol Tsvetanova." loading="lazy" decoding="async">
           </picture>
         </a>
       </figure>
