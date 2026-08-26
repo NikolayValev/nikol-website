@@ -1595,7 +1595,16 @@ Note the ordering: the 301 for old `.html` URLs is guarded by `%{THE_REQUEST}` s
 </IfModule>
 
 <IfModule mod_headers.c>
-  <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|woff2|mp4|ico)$">
+  # 30 days, and deliberately NOT immutable. Filenames here are not
+  # content-hashed, so replacing a headshot in place under the same name is a
+  # normal thing for the site owner to do. immutable would tell browsers never
+  # to revalidate for a year, leaving visitors on the old image with no
+  # cache-busting convention available to fix it.
+  <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|mp4|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  # The font is the one asset whose bytes are genuinely fixed for its name.
+  <FilesMatch "\.woff2$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   <FilesMatch "\.(css|js)$">
@@ -1655,7 +1664,7 @@ RedirectMatch 404 ^/(_source|tools|docs)/
 
 Run: `grep -c RewriteRule .htaccess`
 
-Expected: `6`. Apache syntax cannot be fully validated without Apache; the real test is V9 in Task 12.
+Expected: `5`. Apache syntax cannot be fully validated without Apache; the real test is V9 in Task 12.
 
 - [ ] **Step 3: Commit**
 
