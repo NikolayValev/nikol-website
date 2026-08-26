@@ -1662,9 +1662,13 @@ RedirectMatch 404 ^/(_source|tools|docs)/
 
 - [ ] **Step 2: Sanity-check the syntax**
 
-Run: `grep -c RewriteRule .htaccess`
+Match directive lines only — the explanatory comments mention these words in
+prose, so a plain substring count over-reports:
 
-Expected: `5`. Apache syntax cannot be fully validated without Apache; the real test is V9 in Task 12.
+```bash
+grep -cE '^[[:space:]]*RewriteRule' .htaccess          # expect 5
+grep -E '^[[:space:]]*Header' .htaccess | grep -c immutable   # expect 1
+``` Apache syntax cannot be fully validated without Apache; the real test is V9 in Task 12.
 
 - [ ] **Step 3: Commit**
 
