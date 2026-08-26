@@ -250,11 +250,14 @@ loaded as `<script type="module" defer>`, roughly 60 lines across four functions
 | `initVideoFacade()` | Replace the reel poster with the YouTube iframe on activation. |
 | `initReveal()` | `IntersectionObserver` scroll reveal; no-ops under `prefers-reduced-motion`. |
 
-Every feature degrades: with JS disabled, the nav overlay is reachable via a
-`:target` CSS fallback, gallery images are plain links to the full-size file, and
+Every feature degrades: with JS disabled, the nav renders as
+a plain static list of links, gallery images are plain links to the full-size file, and
 the reel facade is a link to the YouTube page.
 
-The two social icons become inline SVG, removing the FontAwesome kit entirely (P7).
+The social links become plain text ("Instagram", "IMDb", "YouTube") rather than
+icons, removing the FontAwesome kit entirely (P7). Text also reads better to
+screen readers than an icon font did, and needs no `aria-label` to be
+comprehensible.
 
 The broken slideshow (P5) is not repaired — it is replaced. Headshots become a
 grid on `index.html` with the lightbox, so there is no slide index to desync.
