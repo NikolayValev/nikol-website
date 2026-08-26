@@ -10,8 +10,17 @@ function initNav() {
   const close = document.querySelector('.nav-close');
   if (!toggle || !overlay) return;
 
+  // The overlay is a modal only below the desktop breakpoint. At >=64em the
+  // same element is a permanently visible nav bar, and trapping focus there
+  // strands the keyboard user on the last link with no way into the page.
+  const isModal = window.matchMedia('(max-width: 63.999em)');
+
+  // Only rendered elements can take focus. .nav-close is display:none at
+  // desktop width, and calling focus() on it silently does nothing.
   const focusable = () =>
-    [...overlay.querySelectorAll('a[href], button:not([disabled])')];
+    [...overlay.querySelectorAll('a[href], button:not([disabled])')].filter(
+      (el) => el.offsetParent !== null,
+    );
 
   function open() {
     overlay.dataset.open = 'true';
@@ -30,7 +39,20 @@ function initNav() {
   toggle.addEventListener('click', open);
   close?.addEventListener('click', shut);
 
+  // Crossing into desktop width leaves no modal to close, so release the
+  // scroll lock rather than stranding the page unscrollable with no overlay
+  // visible to explain why.
+  isModal.addEventListener('change', (event) => {
+    if (event.matches) return;
+    overlay.dataset.open = 'false';
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  });
+
   overlay.addEventListener('keydown', (event) => {
+    // No trap unless the overlay is genuinely open AS a modal.
+    if (overlay.dataset.open !== 'true' || !isModal.matches) return;
+
     if (event.key === 'Escape') {
       shut();
       return;
