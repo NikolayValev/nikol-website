@@ -11,3 +11,6 @@ desktop.ini
 
 # Local one-time tooling deps (tools/ is never deployed)
 tools/node_modules/
+
+# Generated designer preview (large, self-contained, not deployed)
+preview/
