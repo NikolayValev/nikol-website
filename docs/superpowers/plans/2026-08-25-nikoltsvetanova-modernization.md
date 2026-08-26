@@ -1657,6 +1657,16 @@ npx --yes @axe-core/cli http://localhost:8080/ http://localhost:8080/about \
 
 Expected: zero violations. Then a manual keyboard pass on each page: `Tab` reaches every interactive element, focus is always visible, and no keyboard trap exists outside the intentional nav-overlay trap.
 
+**These five nav behaviours are carried forward from Task 4, which could not
+drive a browser and verified them only by reading the code. They are unconfirmed
+until observed here — do not mark V4 passed without actually exercising them:**
+
+1. At a narrow viewport, the Menu button opens the overlay.
+2. While the overlay is open, `Tab` cycles within it and never escapes to the page behind.
+3. `Escape` closes the overlay.
+4. On close, focus returns to the Menu button that opened it.
+5. `Tab` from a fresh page load reveals the "Skip to content" link, and activating it moves focus to `<main>`.
+
 - [ ] **Step 7: V5 — Lighthouse**
 
 ```bash
