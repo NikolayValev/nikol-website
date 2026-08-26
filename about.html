@@ -20,6 +20,8 @@
 <body>
 
 <a class="skip-link" href="#main">Skip to content</a>
+<!-- <main> carries tabindex="-1": without it the browser scrolls to the anchor
+     but leaves focus on <body>, so the skip link does not actually skip. -->
 
 <header class="wrap">
   <p class="display"><a href="/" style="text-decoration:none">Nikol Tsvetanova</a></p>
@@ -40,7 +42,7 @@
   </div>
 </nav>
 
-<main id="main" class="wrap">
+<main id="main" tabindex="-1" class="wrap">
   <h1 class="section-title">About</h1>
 
   <div class="prose" style="margin-block-start: var(--space-l)">
