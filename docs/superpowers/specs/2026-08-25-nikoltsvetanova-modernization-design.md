@@ -45,7 +45,7 @@ byte-identical to production, but local `index.html` is a half-finished redesign
 
 1. One responsive markup set per page — eliminate the desktop/mobile duplication.
 2. Add a **Reel** page: YouTube-hosted reel plus a self-hosted gallery of individual clips.
-3. Add a **Résumé** page: full credits as HTML, with the PDF as a secondary download.
+3. Link the **résumé PDF** from the primary nav, opening in a new tab.
 4. Evolve the visual design — same serif, minimal, editorial character; modern layout language.
 5. Cut payload from 374 MB to under ~15 MB of deployed assets.
 6. Make the site accessible and discoverable.
@@ -60,7 +60,7 @@ remains the contact mechanism.
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Build approach | **Hand-written static HTML/CSS/JS, no build step** | Six pages updated roughly yearly. A permanent Node toolchain is a worse tax than ~30 lines of `<head>`/nav duplication. Anyone can open a file and fix a typo. |
+| Build approach | **Hand-written static HTML/CSS/JS, no build step** | Four pages updated roughly yearly. A permanent Node toolchain is a worse tax than ~30 lines of `<head>`/nav duplication. Anyone can open a file and fix a typo. |
 | Hosting | **Keep HostGator**, upload static files as today | User constraint. No server-side execution available. |
 | Design latitude | **Evolve** | Keep Mila Tsvetanova's serif/minimal/grayscale identity; modernize the layout language. |
 | Reel video | **YouTube embed**, click-to-load facade | Zero bandwidth on shared hosting, adaptive quality, no third-party JS until the visitor presses play. |
@@ -89,7 +89,6 @@ load-bearing. To be unambiguous:
 ├── index.html            Hero row + headshot gallery
 ├── about.html            Bio, contact, socials
 ├── reel.html             YouTube reel + self-hosted clip gallery   [new]
-├── resume.html           Full HTML credits + PDF download          [new]
 ├── gallery.html          Production stills with caption overlays
 ├── 404.html
 ├── .htaccess
@@ -119,10 +118,17 @@ non-web name so the deploy set is self-evident: **upload everything except
 
 ### Navigation
 
-One nav, identical markup on all five pages: **Home · About · Reel · Résumé · Gallery**.
+One nav, identical markup on all four pages: **Home · About · Reel · Resume · Gallery**.
 
 - ≥1024px: horizontal, fixed to the bottom edge (preserving the current desktop idiom)
 - <1024px: a `<button>` toggle opening a full-screen overlay
+
+**Resume is not a page.** It links directly to
+`/assets/docs/nikol-tsvetanova-resume.pdf` with `target="_blank"` and
+`rel="noopener"`. Because it behaves differently from its four neighbours, it
+carries a visually-hidden "(opens the PDF in a new tab)" for screen readers and a
+small outbound indicator alongside the label — an unannounced new tab is a
+well-known usability failure, and it is the only nav item that leaves the site.
 
 Duplicate and mis-targeted links (P14) are resolved: each entry points to exactly
 one distinct page. The current page is marked `aria-current="page"`.
@@ -253,66 +259,29 @@ The two social icons become inline SVG, removing the FontAwesome kit entirely (P
 The broken slideshow (P5) is not repaired — it is replaced. Headshots become a
 grid on `index.html` with the lightbox, so there is no slide index to desync.
 
-## 9. Résumé page
+## 9. Resume
 
-Content is extracted from `_source/.../Nikol Tsvetanova Resume.pdf` and is fully
-specified here, so implementation needs no further input.
+The résumé is **not** an HTML page. The `Resume` nav entry links directly to the
+PDF, which opens in a new tab (see §5).
 
-**Header:** Nikol Tsvetanova · Represented by Florance Kirilova, Posche Talent ·
-florance@poschemodels.com · (646) 205 3023 · New York, New York · Non-Union
+- The PDF moves from `IMAGES/Nikol Tsvetanova Resume.pdf` to
+  `assets/docs/nikol-tsvetanova-resume.pdf` — lowercase, hyphenated, no spaces,
+  so the URL needs no percent-encoding when shared.
+- The old URL 301-redirects to the new one (§12). It has been live since
+  September 2024 and may have been sent to casting directors, so it must not
+  silently 404.
+- The current file is 115.8 KB and needs no optimization.
 
-**Theatre**
+**Trade-off accepted.** A PDF is substantially weaker than HTML for search: its
+credits are not indexed as page content, it cannot carry structured data, and it
+renders poorly on phones in-browser. Searches for, say, "Nikol Tsvetanova Prince
+Hal" will therefore not resolve to this site. This is a deliberate choice for
+simplicity — one canonical résumé document, updated in one place, always matching
+what gets submitted to casting. Recorded here so the cost is visible if the
+decision is ever revisited.
 
-| Production | Role | Company / Director |
-|---|---|---|
-| Full Moon | Avery | The Chain Theatre One-Act Festival / Dir. Caitlin Mayernik |
-| Henry IV Part 1 | Prince Hal | Purchase Repertory / Dir. Petronia Paley |
-| Sweat | Tracey | Purchase Repertory / Dir. Cezar Williams |
-| Life Is a Dream | Rosaura | Purchase Repertory / Dir. Tatyana-Marie Carlo |
-| Passage | R, S, Mosquito, Gecko | Purchase Repertory / Dir. James Dean Palmer |
-| The Last Days of Judas Iscariot | Saint Thomas | Purchase Repertory / Dir. Dean Irby |
-| Ties | Carol | Squee Productions / Dir. Soha Rizvi |
-
-**Television**
-
-| Production | Role | Network / Director |
-|---|---|---|
-| Law and Order: Organized Crime | Costar | NBC / Dir. Terry Miller |
-
-**Film**
-
-| Production | Role | Director |
-|---|---|---|
-| Confession | Supporting | The Club Creates / Dir. Katherine Cullen |
-| String Theory | Lead | Dir. Zeena Kubeisy |
-| Animosity | Lead | Dir. Christian Montes |
-| Attached | Lead | Dir. Jonathon Oliveira |
-| Deux Visage | Supporting | Dir. Jonathon Oliveira |
-| Undergrads (Web Series) | Supporting | Dir. Egor Subbotin |
-
-**Training** — SUNY Purchase BFA Acting Conservatory
-
-- Acting — Trazana Beverly, Matthew Gasda, Dennis Hilton-Reid, Dean A. Irby, Karen Kohlhaas
-- Shakespeare Technique — Christopher McCann
-- Speech — Margaret Surrovell, Henry McDaniel
-- Voice — Ginger Eckert, Liam Joynt, Pamela Prather
-- Stage Combat — Mitch McCoy, J. Allen Suddeth
-- Dance/Movement — Jill Echo, Ronni Stewart, Gabriel Thomas Pasculli
-- Improv/Clown — Sarah Petersiel
-- Mask — Jay Dunn
-
-**Skills** — Languages: fluent in Bulgarian. Dialects: RP, Cockney, Russian,
-Bulgarian; proficient in IPA. Movement: strong mover, yoga, armed and unarmed
-stage combat (SAFD 2022), Bulgarian folk dance. Miscellaneous: bartending, driver
-(automatic). Citizenship/Passports: US, Bulgarian.
-
-Marked up as `<table>` per section with real `<caption>` and `<th scope>`, and
-collapsing to stacked definition rows below 640px. The PDF remains linked as a
-secondary "Download PDF" action for casting submissions.
-
-> The PDF renders the dialect as "URP", which is not a dialect designation. This
-> is read as a typo for **RP** (Received Pronunciation) and corrected on the web
-> page. Flag to Nikol; the PDF itself is not edited by this work.
+The mitigation is §11: the JSON-LD `Person` schema still gives search engines
+structured facts about who she is, independent of the résumé's format.
 
 ## 10. Accessibility
 
@@ -375,6 +344,11 @@ evidence-based. **No step below is considered done on inspection alone.**
 | V6 | Payload | Sum of deployed `assets/` | Under 15 MB |
 | V7 | Progressive enhancement | Reload each page with JS disabled | Nav, galleries, and reel all remain usable |
 | V8 | Reduced motion | `prefers-reduced-motion: reduce` | No transform or opacity animation runs |
+| V9 | Resume link and redirect | After deploy: `curl -I` the nav's PDF URL and the old `/IMAGES/...` URL | Nav URL returns 200 `application/pdf`; old URL returns 301 to it |
+
+V9 is a post-deploy check because `.htaccess` rules cannot be exercised locally.
+The résumé is now a primary nav destination rather than one link inside a page,
+so a silent 404 there is a worse failure than it would have been before.
 
 V2 exists specifically because P13 — a filename mismatch across an entire
 gallery — shipped and went unnoticed. That class of bug must be caught mechanically.
@@ -392,7 +366,8 @@ gallery — shipped and went unnoticed. That class of bug must be caught mechani
 
 ## 15. What "done" looks like
 
-Five navigable pages plus a 404, one responsive markup set each, on the existing host. Under 15 MB
-deployed, down from 374 MB. No jQuery, no FontAwesome, no unused fonts. A working
-reel page and a real résumé page. Keyboard-navigable, screen-reader-legible, and
-findable by name. Every claim in §13 backed by a command that was actually run.
+Four navigable pages plus a 404, one responsive markup set each, on the existing
+host, with the resume PDF linked from the nav and opening in a new tab. Under
+15 MB deployed, down from 374 MB. No jQuery, no FontAwesome, no unused fonts. A
+working reel page. Keyboard-navigable, screen-reader-legible, and findable by
+name. Every claim in §13 backed by a command that was actually run.
