@@ -1,0 +1,215 @@
+{
+  "hero-01": {
+    "width": 3209,
+    "height": 4971,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "hero-02": {
+    "width": 3308,
+    "height": 5232,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "hero-03": {
+    "width": 2896,
+    "height": 4765,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "hero-04": {
+    "width": 3648,
+    "height": 4977,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-01": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-02": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-03": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "headshot-04": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-05": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-06": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "headshot-07": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-01": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-02": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-03": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-04": {
+    "width": 1063,
+    "height": 1580,
+    "widths": [
+      640
+    ]
+  },
+  "gallery-05": {
+    "width": 1063,
+    "height": 1580,
+    "widths": [
+      640
+    ]
+  },
+  "gallery-06": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "gallery-07": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-08": {
+    "width": 2550,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-09": {
+    "width": 5075,
+    "height": 3792,
+    "widths": [
+      640,
+      1280,
+      2400
+    ]
+  },
+  "gallery-10": {
+    "width": 1063,
+    "height": 1580,
+    "widths": [
+      640
+    ]
+  },
+  "gallery-11": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "gallery-12": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "gallery-13": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "gallery-14": {
+    "width": 2114,
+    "height": 1580,
+    "widths": [
+      640,
+      1280
+    ]
+  }
+}
