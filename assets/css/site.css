@@ -28,6 +28,7 @@
   --space-3xl: clamp(6rem, 5.06rem + 4.69vw, 9.5rem);
 
   --measure: 62ch;
+  --nav-h: 3.75rem;
 }
 
 @font-face {
@@ -49,7 +50,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   /* The nav is position:fixed at the bottom edge, so the page must reserve
      room for it or it sits on top of the footer at scroll-bottom. */
-  padding-block-end: clamp(4.5rem, 4rem + 2vw, 6rem);
+  padding-block-end: calc(var(--nav-h) + var(--space-m));
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -128,6 +129,7 @@ a:hover { font-style: italic; }
 .site-nav { --nav-bg: var(--paper); }
 
 .nav-toggle {
+  min-height: var(--nav-h);
   position: fixed;
   inset-block-end: 0;
   inset-inline: 0;
@@ -175,14 +177,20 @@ a:hover { font-style: italic; }
 }
 
 @media (min-width: 64em) {
+  /* The desktop bar is taller than the mobile toggle, and the home page
+     reserves exactly this much room beneath the pictures — so pin it. */
+  :root { --nav-h: 5.25rem; }
+
   .nav-toggle, .nav-close { display: none; }
   .nav-overlay {
     position: fixed;
     inset: auto 0 0 0;
+    min-height: var(--nav-h);
+    align-items: center;
     display: flex;
     justify-content: center;
     gap: var(--space-m);
-    padding: var(--space-s);
+    padding: 0 var(--space-s);
     background: var(--nav-bg);
     border-block-start: 1px solid var(--line);
   }
@@ -199,6 +207,29 @@ a:hover { font-style: italic; }
 }
 
 .grid-gallery.is-wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); }
+
+/* Mosaic: the wide/narrow rhythm the original gallery had. Four columns, most
+   images spanning two, a few spanning one. The two aspect ratios are chosen so
+   a wide pair and a narrow trio come out the same height and the rows line up. */
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-s);
+}
+.mosaic .figure { grid-column: span 2; }
+.mosaic .figure.is-narrow { grid-column: span 1; }
+.mosaic .figure > a { display: block; aspect-ratio: 3 / 2; }
+.mosaic .figure.is-narrow > a { aspect-ratio: 3 / 4; }
+.mosaic .figure img { width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 47.99em) {
+  .mosaic {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: dense;          /* keep a lone narrow image company */
+  }
+  .mosaic .figure > a { aspect-ratio: 4 / 3; }
+  .mosaic .figure.is-narrow > a { aspect-ratio: 3 / 4; }
+}
 
 .figure { margin: 0; }
 .figure img { width: 100%; }
@@ -277,12 +308,44 @@ a:hover { font-style: italic; }
 
 .no-js .carousel-slide img { animation: none; }
 
+/* ---------- Wordmark ---------- */
+/* The viewBox is the glyphs' own measured ratio (6.576:1 in Mirra), so the
+   name scales to the container's exact width with natural letterforms — its
+   first and last strokes line up with the edges of the pictures below. */
+.wordmark { display: block; width: 100%; height: auto; }
+.wordmark text { font-family: var(--font-display); fill: var(--ink); }
+
 /* ---------- Home ---------- */
 /* The home page is the carousel and nothing else, so it sits centred in the
    space between the header and the fixed nav rather than stacking to the top
    and leaving a gap underneath. */
-.is-home { min-height: 100dvh; display: flex; flex-direction: column; }
-.is-home main { flex: 1; display: grid; align-content: center; }
+.is-home {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Tight to the nav: the pictures should sit just above it, not float in a
+     band of empty space. */
+  padding-block-end: calc(var(--nav-h) + var(--space-2xs));
+}
+.is-home header { padding-block-start: var(--space-l); }
+
+/* The pictures take whatever height is left once the name and the nav have
+   had theirs, rather than deriving height from their own width and pushing
+   the page past the viewport. min-height:0 is what lets a grid child shrink. */
+.is-home main {
+  /* height:0 plus flex-grow means the used height comes purely from the space
+     left over, never from the content. Without it the chain is circular — the
+     slides' height:100% resolves against an indefinite parent, falls back to
+     the images' intrinsic height, and the page overflows under the nav. */
+  flex: 1 1 0;
+  height: 0;
+  min-height: 0;
+  display: grid;
+  padding-block-start: var(--space-s);
+}
+.is-home .carousel { min-height: 0; display: grid; }
+.is-home .carousel-track { height: 100%; min-height: 0; }
+.is-home .carousel-slide { aspect-ratio: auto; height: 100%; min-height: 0; }
 
 /* ---------- Lightbox ---------- */
 .lightbox {
