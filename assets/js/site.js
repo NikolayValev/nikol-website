@@ -140,6 +140,146 @@ function initVideoFacade() {
   }
 }
 
+function initCarousel() {
+  const carousel = document.querySelector('.carousel');
+  if (!carousel) return;
+
+  const track = carousel.querySelector('.carousel-track');
+  const slides = [...carousel.querySelectorAll('.carousel-slide')];
+  const dots = [...carousel.querySelectorAll('.carousel-dot')];
+  const toggle = carousel.querySelector('.carousel-toggle');
+  if (!track || slides.length === 0) return;
+
+  const DELAY = 5000;
+  const RESUME_AFTER = 6000;
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let timer = null;
+  let resumeTimer = null;
+  let paused = calm.matches;   // never auto-advance when motion is unwelcome
+
+  // Which slide is at the left edge. Derived from scroll position rather than
+  // tracked in a variable, so a swipe and an auto-advance can never disagree.
+  const currentIndex = () => {
+    const step = slides[0].getBoundingClientRect().width + gap();
+    return step > 0 ? Math.round(track.scrollLeft / step) : 0;
+  };
+
+  const gap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
+
+  // How many slides fit at once: 1 on mobile, 3 on desktop. Read from layout
+  // rather than from a breakpoint constant, so CSS stays the single source.
+  const perView = () => {
+    const step = slides[0].getBoundingClientRect().width + gap();
+    return step > 0 ? Math.max(1, Math.round(track.clientWidth / step)) : 1;
+  };
+
+  const lastIndex = () => Math.max(0, slides.length - perView());
+
+  function goTo(index, smooth = true) {
+    const step = slides[0].getBoundingClientRect().width + gap();
+    track.scrollTo({
+      left: index * step,
+      behavior: smooth && !calm.matches ? 'smooth' : 'auto',
+    });
+  }
+
+  function advance() {
+    const next = currentIndex() >= lastIndex() ? 0 : currentIndex() + 1;
+    goTo(next);
+  }
+
+  function play() {
+    if (paused || calm.matches) return;
+    stop();
+    timer = setInterval(advance, DELAY);
+    toggle?.setAttribute('aria-pressed', 'false');
+    if (toggle) toggle.textContent = 'Pause';
+  }
+
+  function stop() {
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+  }
+
+  // A deliberate pause stays paused. An incidental one (hover, swipe) resumes.
+  function hold() {
+    stop();
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => {
+      if (!paused) play();
+    }, RESUME_AFTER);
+  }
+
+  function markInView() {
+    const left = track.scrollLeft - 1;
+    const right = left + track.clientWidth + 2;
+    const step = slides[0].getBoundingClientRect().width + gap();
+    slides.forEach((slide, i) => {
+      const start = i * step;
+      slide.dataset.inView = String(start >= left && start < right);
+    });
+    const index = currentIndex();
+    dots.forEach((dot, i) => {
+      dot.setAttribute('aria-current', String(i === index));
+    });
+  }
+
+  toggle?.addEventListener('click', () => {
+    paused = !paused;
+    if (paused) {
+      stop();
+      clearTimeout(resumeTimer);
+      toggle.setAttribute('aria-pressed', 'true');
+      toggle.textContent = 'Play';
+    } else {
+      play();
+    }
+  });
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      goTo(Math.min(i, lastIndex()));
+      hold();
+    });
+  });
+
+  // Hover and keyboard focus pause; they do not count as a deliberate stop.
+  carousel.addEventListener('pointerenter', stop);
+  carousel.addEventListener('pointerleave', () => { if (!paused) play(); });
+  carousel.addEventListener('focusin', stop);
+  carousel.addEventListener('focusout', () => { if (!paused) play(); });
+
+  // A swipe is the visitor taking over. Give them the wheel for a while.
+  track.addEventListener('pointerdown', hold);
+  track.addEventListener('touchstart', hold, { passive: true });
+
+  track.addEventListener('scroll', markInView, { passive: true });
+  addEventListener('resize', markInView, { passive: true });
+
+  // Nothing is gained by advancing a carousel nobody can see.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else if (!paused) play();
+  });
+
+  calm.addEventListener('change', (event) => {
+    if (event.matches) {
+      paused = true;
+      stop();
+      slides.forEach((s) => { s.dataset.inView = 'true'; });
+    }
+  });
+
+  markInView();
+  if (calm.matches) {
+    slides.forEach((s) => { s.dataset.inView = 'true'; });
+    if (toggle) toggle.hidden = true;   // nothing is moving to pause
+  } else {
+    play();
+  }
+}
+
 function initReveal() {
   const targets = document.querySelectorAll('.reveal');
   if (targets.length === 0) return;
@@ -164,6 +304,7 @@ function initReveal() {
 }
 
 initNav();
+initCarousel();
 initLightbox();
 initVideoFacade();
 initReveal();

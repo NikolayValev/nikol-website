@@ -4,6 +4,7 @@
   "type": "module",
   "description": "One-time asset scripts. Not required to edit or deploy the site.",
   "dependencies": {
+    "puppeteer": "^25.9.0",
     "sharp": "^0.34.0"
   }
 }
