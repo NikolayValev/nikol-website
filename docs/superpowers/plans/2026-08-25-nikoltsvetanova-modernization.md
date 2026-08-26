@@ -506,6 +506,9 @@ ul[class], ol[class] { list-style: none; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
+  /* The nav is position:fixed at the bottom edge, so the page must reserve
+     room for it or it sits on top of the footer at scroll-bottom. */
+  padding-block-end: clamp(4.5rem, 4rem + 2vw, 6rem);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -706,8 +709,11 @@ a:hover { font-style: italic; }
 .embed iframe { width: 100%; height: 100%; border: 0; }
 
 /* ---------- Motion ---------- */
-.reveal { opacity: 0; translate: 0 1.5rem; transition: opacity 700ms ease, translate 700ms ease; }
-.reveal[data-visible="true"] { opacity: 1; translate: none; }
+/* Deliberately does NOT animate opacity. Hiding text until an observer fires
+   makes it invisible to anyone without JS, and makes an accessibility audit
+   correctly report it as unreadable. Motion only; the content is always there. */
+.reveal { translate: 0 1.5rem; transition: translate 700ms ease; }
+.reveal[data-visible="true"] { translate: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -734,6 +740,9 @@ a:hover { font-style: italic; }
   border-block-start: 1px solid var(--line);
 }
 .no-js .nav-overlay a { font-family: var(--font-body); font-size: var(--step-1); }
+
+/* Without JS nothing ever sets data-visible, so pin revealed state. */
+.no-js .reveal { translate: none; transition: none; }
 ```
 
 - [ ] **Step 3: Verify the CSS parses**
@@ -954,6 +963,8 @@ On `index.html` the header keeps the `<h1>`, because the home page's most import
 <body>
 
 <a class="skip-link" href="#main">Skip to content</a>
+<!-- <main> carries tabindex="-1": without it the browser scrolls to the anchor
+     but leaves focus on <body>, so the skip link does not actually skip. -->
 
 <header class="wrap">
   <h1 class="display"><a href="/" style="text-decoration:none">Nikol Tsvetanova</a></h1>
@@ -974,7 +985,7 @@ On `index.html` the header keeps the `<h1>`, because the home page's most import
   </div>
 </nav>
 
-<main id="main" class="wrap">
+<main id="main" tabindex="-1" class="wrap">
   <p class="prose">Placeholder — content lands in Task 5.</p>
 </main>
 
