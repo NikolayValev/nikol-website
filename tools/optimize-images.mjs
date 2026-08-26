@@ -39,6 +39,8 @@ const RENAMES = [
   ['NT_G12.jpg', 'gallery-12'],
   ['NT_G13.jpg', 'gallery-13'],
   ['NT_G14.jpg', 'gallery-14'],
+  ['REEL_COMEDIC.jpg', 'reel-comedic'],
+  ['REEL_DRAMATIC.jpg', 'reel-dramatic'],
 ];
 
 await mkdir(OUT, { recursive: true });

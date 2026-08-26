@@ -21,9 +21,12 @@ async function exists(p) {
 }
 
 function refsFrom(html) {
+  // Strip HTML comments first: example/scaffold markup inside <!-- --> is
+  // documentation, not a live reference, and shouldn't be checked.
+  const stripped = html.replace(/<!--[\s\S]*?-->/g, '');
   const out = new Set();
-  for (const m of html.matchAll(ATTR_RE)) out.add(m[1].trim());
-  for (const m of html.matchAll(SRCSET_RE)) {
+  for (const m of stripped.matchAll(ATTR_RE)) out.add(m[1].trim());
+  for (const m of stripped.matchAll(SRCSET_RE)) {
     for (const candidate of m[1].split(',')) {
       const url = candidate.trim().split(/\s+/)[0];
       if (url) out.add(url);

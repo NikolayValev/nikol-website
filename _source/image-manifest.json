@@ -220,5 +220,21 @@
       1280,
       2114
     ]
+  },
+  "reel-comedic": {
+    "width": 1280,
+    "height": 720,
+    "widths": [
+      640,
+      1280
+    ]
+  },
+  "reel-dramatic": {
+    "width": 1280,
+    "height": 720,
+    "widths": [
+      640,
+      1280
+    ]
   }
 }
