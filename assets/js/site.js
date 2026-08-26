@@ -39,6 +39,15 @@ function initNav() {
   toggle.addEventListener('click', open);
   close?.addEventListener('click', shut);
 
+  // A nav link may open a new tab (Resume) or navigate away. Either way the
+  // modal is done, and leaving body overflow hidden would strand the visitor
+  // on an unscrollable page when they come back.
+  for (const link of overlay.querySelectorAll('a[href]')) {
+    link.addEventListener('click', () => {
+      if (overlay.dataset.open === 'true') shut();
+    });
+  }
+
   // Crossing into desktop width leaves no modal to close, so release the
   // scroll lock rather than stranding the page unscrollable with no overlay
   // visible to explain why.

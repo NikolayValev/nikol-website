@@ -1,7 +1,7 @@
 # ---------- Compression ----------
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml \
-    application/javascript application/json image/svg+xml
+    application/javascript text/javascript application/json image/svg+xml
 </IfModule>
 
 # ---------- Caching ----------
@@ -53,8 +53,7 @@
   # mod_rewrite tests RewriteRule patterns against the DECODED URL-path, so the
   # incoming /IMAGES/Nikol%20Tsvetanova%20Resume.pdf arrives here with literal
   # spaces. Matching the %20 form would be dead code.
-  RewriteRule ^IMAGES/Nikol\ Tsvetanova\ Resume\.pdf$ \
-    /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
+  RewriteRule "^IMAGES/Nikol Tsvetanova Resume\.pdf$" /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
 
   # Retired page: headshots now live on the home page.
   RewriteRule ^headshots(\.html)?$ / [R=301,L]
@@ -74,4 +73,6 @@
 ErrorDocument 404 /404.html
 
 # ---------- Never serve working directories ----------
-RedirectMatch 404 ^/(_source|tools|docs)/
+<IfModule mod_alias.c>
+  RedirectMatch 404 "^/(_source|tools|docs|\.git|\.superpowers)/"
+</IfModule>
