@@ -54,8 +54,8 @@ const manifest = {};
 
 async function emit(input, name, width, label) {
   const pipeline = sharp(input).resize({ width, withoutEnlargement: true });
-  await pipeline.clone().avif({ quality: 10 }).toFile(join(OUT, `${name}-${label}.avif`));
-  await pipeline.clone().webp({ quality: 8 }).toFile(join(OUT, `${name}-${label}.webp`));
+  await pipeline.clone().avif({ quality: 55 }).toFile(join(OUT, `${name}-${label}.avif`));
+  await pipeline.clone().webp({ quality: 72 }).toFile(join(OUT, `${name}-${label}.webp`));
   await pipeline
     .clone()
     .jpeg({ quality: 78, mozjpeg: true, progressive: true })
@@ -70,15 +70,17 @@ for (const [from, name] of RENAMES) {
   // of a 1063px original would be a blurry lie, and markup that assumed one
   // existed would 404.
   const widths = WIDTHS.filter((w) => w <= meta.width);
+
+  // If the source is narrower than our largest tier, add its own width so the
+  // best available resolution stays reachable. No extra always-present variant:
+  // for a source >= 2400px that would duplicate -2400 byte for byte.
+  if (meta.width < 2400 && !widths.includes(meta.width)) widths.push(meta.width);
+  widths.sort((a, b) => a - b);
+
   for (const width of widths) await emit(input, name, width, String(width));
 
-  // -full always exists, whatever the source size, so lightbox hrefs and
-  // og:image can reference one predictable URL per image.
-  const fullWidth = Math.min(meta.width, 2400);
-  await emit(input, name, fullWidth, 'full');
-
   manifest[name] = { width: meta.width, height: meta.height, widths };
-  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})  widths: ${widths.join(', ') || 'none'} + full@${fullWidth}`);
+  console.log(`${from}  ->  ${name}  (${meta.width}x${meta.height})  widths: ${widths.join(', ')}`);
 }
 
 // Written to disk rather than printed: Tasks 5, 7, 8 are implemented by
