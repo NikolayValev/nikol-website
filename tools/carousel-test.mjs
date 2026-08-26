@@ -40,21 +40,31 @@ const heights = await p.$$eval('.carousel-slide img', els =>
   els.slice(0, 4).map(e => e.offsetHeight));
 say('all images the same height', new Set(heights).size === 1, `heights ${heights.join(', ')}`);
 
-// direction: scrollLeft must DECREASE (strip travels rightward)
+// direction: scrollLeft must INCREASE (strip travels leftward, images enter
+// from the right edge)
 const a0 = await p.$eval('.carousel-track', t => t.scrollLeft);
 await wait(4200);
 const a1 = await p.$eval('.carousel-track', t => t.scrollLeft);
-say('moves left-to-right (scrollLeft decreases)', a1 < a0, `${Math.round(a0)} -> ${Math.round(a1)}`);
+say('moves right-to-left (scrollLeft increases)', a1 > a0, `${Math.round(a0)} -> ${Math.round(a1)}`);
 
-// faster cadence: should advance at least twice inside ~7.5s
-const b0 = await p.$eval('.carousel-track', t => t.scrollLeft);
-await wait(7500);
-const b1 = await p.$eval('.carousel-track', t => t.scrollLeft);
+// Faster cadence. Sampling raw displacement under-reports across a wrap, so
+// accumulate forward movement and treat a large backward jump as one loop.
 const stepPx = await p.$eval('.carousel-track', t => {
   const s = t.querySelector('.carousel-slide');
   return s.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0);
 });
-const moved = Math.abs(b0 - b1) / stepPx;
+const loopPx = stepPx * 4;
+let travelled = 0;
+let prev = await p.$eval('.carousel-track', t => t.scrollLeft);
+for (let i = 0; i < 30; i++) {
+  await wait(250);
+  const now = await p.$eval('.carousel-track', t => t.scrollLeft);
+  let delta = now - prev;
+  if (delta < -loopPx / 2) delta += loopPx;      // wrapped
+  travelled += Math.max(0, delta);
+  prev = now;
+}
+const moved = travelled / stepPx;
 say('rotates quicker (2+ steps in 7.5s)', moved >= 1.8, `${moved.toFixed(1)} steps`);
 
 // the loop must never leave the safe band — that band is what hides the wrap
@@ -115,8 +125,46 @@ await p.close();
 // --- about ---
 p = await b.newPage();
 await p.goto('http://localhost:8080/about', { waitUntil: 'networkidle0' });
-say('about has 7 headshots', (await p.$$eval('[data-lightbox]', e => e.length)) === 7);
+const aboutImgs = await p.$$eval('[data-lightbox]', e => e.length);
+say('about has exactly one portrait', aboutImgs === 1, `${aboutImgs} found`);
 say('about still shows credits', (await p.$$('footer')).length === 1);
+const sideBySide = await p.evaluate(() => {
+  const fig = document.querySelector('.bio-portrait');
+  const prose = document.querySelector('.bio .prose');
+  if (!fig || !prose) return false;
+  const f = fig.getBoundingClientRect(), t = prose.getBoundingClientRect();
+  return f.right <= t.left + 1;   // portrait sits to the left of the text
+});
+say('portrait sits left of the bio text', sideBySide);
+const noResumeSentence = await p.evaluate(() =>
+  !document.querySelector('main').textContent.includes('You can view her'));
+say('resume sentence removed from About', noResumeSentence);
+await p.close();
+
+// --- contact page ---
+p = await b.newPage();
+await p.setViewport({ width: 1280, height: 900 });
+await p.goto('http://localhost:8080/contact', { waitUntil: 'networkidle0' });
+const c = await p.evaluate(() => ({
+  h1: document.querySelectorAll('h1').length,
+  email: !!document.querySelector('a[href^="mailto:"]'),
+  resume: !!document.querySelector('a[href$="resume.pdf"]'),
+  current: document.querySelector('[aria-current="page"]')?.textContent.trim(),
+}));
+say('contact page exists with one h1', c.h1 === 1);
+say('contact has the agent email', c.email);
+say('contact has the resume download', c.resume);
+say('contact marked current in nav', c.current === 'Contact', `current: ${c.current}`);
+await p.close();
+
+// --- resume is gone from every nav ---
+p = await b.newPage();
+let navResume = 0;
+for (const u of ['/', '/about', '/reel', '/contact', '/gallery']) {
+  await p.goto('http://localhost:8080' + u, { waitUntil: 'domcontentloaded' });
+  navResume += await p.$$eval('nav a', els => els.filter(a => /resume/i.test(a.textContent)).length);
+}
+say('no Resume tab in any nav', navResume === 0, `${navResume} found`);
 await p.close();
 
 await b.close();

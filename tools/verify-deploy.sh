@@ -31,7 +31,7 @@ echo
 # 1. THE BIG ONE. A malformed .htaccess returns 500 for every page. If this
 #    fails, restore the backed-up .htaccess immediately — the site is down.
 echo "Site is up (a 500 here means .htaccess is malformed — restore the backup NOW):"
-for p in / /about /reel /gallery; do
+for p in / /about /reel /contact /gallery; do
   check "GET $p" "$(code "$HOST$p")" "200"
 done
 echo

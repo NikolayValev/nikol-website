@@ -308,6 +308,22 @@ a:hover { font-style: italic; }
 
 .no-js .carousel-slide img { animation: none; }
 
+/* ---------- Bio ---------- */
+/* Portrait on the left, text on the right. The portrait is capped rather than
+   proportional so the text column keeps a readable measure at any width. */
+.bio {
+  display: grid;
+  gap: var(--space-xl);
+  align-items: start;
+  margin-block-start: var(--space-l);
+}
+.bio-portrait { margin: 0; }
+.bio-portrait img { width: 100%; }
+
+@media (min-width: 48em) {
+  .bio { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
+}
+
 /* ---------- Wordmark ---------- */
 /* The viewBox is the glyphs' own measured ratio (6.576:1 in Mirra), so the
    name scales to the container's exact width with natural letterforms — its

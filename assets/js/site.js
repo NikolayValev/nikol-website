@@ -169,23 +169,34 @@ function initCarousel() {
   const step = () => originals[0].getBoundingClientRect().width + gap();
   const loopWidth = () => step() * originals.length;
 
-  function normalize() {
-    const loop = loopWidth();
-    if (loop <= 0) return;
-    if (track.scrollLeft < 1) track.scrollLeft += loop;
-    else if (track.scrollLeft >= loop * 2 - 1) track.scrollLeft -= loop;
+  // The position is kept inside [0, loopWidth). Beyond that the track simply
+  // runs out of scrollable width — with three slides visible out of eight, the
+  // furthest scrollLeft can reach is five steps, so parking a loop in and then
+  // advancing rightward stalls after one move.
+  let settle = null;
+  function normalizeSoon() {
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      const loop = loopWidth();
+      if (loop <= 0) return;
+      if (track.scrollLeft >= loop) track.scrollLeft -= loop;
+      else if (track.scrollLeft < 0) track.scrollLeft += loop;
+    }, 220);
   }
 
-  // Moves the strip rightward: scrollLeft decreases, so each new image enters
-  // from the left edge.
+  // Moves the strip leftward: scrollLeft increases, so each new image enters
+  // from the right edge.
   function advance() {
     const distance = step();
+    const loop = loopWidth();
     if (distance <= 0) return;
-    if (track.scrollLeft - distance < 1) {
-      track.scrollLeft += loopWidth();   // instant, and visually identical
+    // Rewind by exactly one loop before it would run past the end. The second
+    // copy is identical to the first, so the jump cannot be seen.
+    if (track.scrollLeft + distance >= loop - 0.5) {
+      track.scrollLeft -= loop;
     }
     track.scrollTo({
-      left: track.scrollLeft - distance,
+      left: track.scrollLeft + distance,
       behavior: calm.matches ? 'auto' : 'smooth',
     });
   }
@@ -215,11 +226,11 @@ function initCarousel() {
   carousel.addEventListener('focusout', play);
   track.addEventListener('pointerdown', hold);
   track.addEventListener('touchstart', hold, { passive: true });
-  track.addEventListener('scroll', normalize, { passive: true });
+  track.addEventListener('scroll', normalizeSoon, { passive: true });
 
   addEventListener('resize', () => {
     stop();
-    track.scrollLeft = loopWidth();
+    track.scrollLeft = 0;
     if (!calm.matches) play();
   }, { passive: true });
 
@@ -234,9 +245,8 @@ function initCarousel() {
     else play();
   });
 
-  // Start one loop in, so there is room to travel leftward before wrapping.
   requestAnimationFrame(() => {
-    track.scrollLeft = loopWidth();
+    track.scrollLeft = 0;
     play();
   });
 }

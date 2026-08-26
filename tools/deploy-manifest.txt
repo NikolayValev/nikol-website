@@ -1,5 +1,6 @@
 .htaccess
 404.html
+README.md
 about.html
 assets/css/site.css
 assets/docs/nikol-tsvetanova-resume.pdf
@@ -234,6 +235,7 @@ assets/img/reel-dramatic-640.jpg
 assets/img/reel-dramatic-640.webp
 assets/js/site.js
 assets/video/.gitkeep
+contact.html
 favicon.svg
 gallery.html
 index.html

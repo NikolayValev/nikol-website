@@ -20,6 +20,7 @@ const PAGES = [
   ['index.html', 'Home'],
   ['about.html', 'About'],
   ['reel.html', 'Reel'],
+  ['contact.html', 'Contact'],
   ['gallery.html', 'Gallery'],
   ['404.html', '404'],
 ];
