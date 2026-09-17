@@ -1,22 +1,46 @@
 /* ---------- Tokens ---------- */
+/* Colours, type scale and rhythm come from Mila's Figma
+   ("Nikol Tsvetanova Website"). The cream and the pure black were sampled off
+   the comps; the previous palette was a cooler grey. */
 :root {
-  --paper: #E8E6E4;
-  --panel: #F2F0EF;
-  --ink: #111111;
-  --ink-muted: #55514E;
-  --line: rgba(17, 17, 17, 0.14);
-  --ink-invert: #F2F0EF;
-  --overlay: rgba(17, 17, 17, 0.72);
+  --paper: #F2E9E4;
+  --panel: #FFFFFF;
+  --ink: #000000;
+  /* DEVIATION from the comps, deliberately. The grey Mila uses for the
+     inactive nav items and the small print samples as #8B8680, which is
+     3.02:1 against this cream — under WCAG AA's 4.5:1 for text this size, and
+     these are the site's primary navigation links, not decoration. #6B6762 is
+     the lightest warm grey on the same hue that clears AA (4.69:1), so it
+     keeps the intent — clearly recessive against the black current-page item —
+     without shipping a nav that fails an audit. Worth confirming with her. */
+  --ink-muted: #6B6762;
+  --line: rgba(0, 0, 0, 0.22);
+  --ink-invert: #F2E9E4;
+  --overlay: rgba(0, 0, 0, 0.78);
+  /* The wash the gallery lays over a photo so its caption can be read. */
+  --wash: rgba(242, 233, 228, 0.72);
 
-  --font-body: "Times New Roman", Times, serif;
-  --font-display: "Mirra", "Times New Roman", Times, serif;
+  /* PLACEHOLDER — the comps are set in a light geometric sans (Futura/Jost
+     family). The real name is not readable from the file: the Figma MCP needs
+     editor access and the link we have is view-only, so the face is a stand-in
+     while the rest of the type system — case, tracking, sizes, weights — is
+     taken from the comps as drawn. When Mila names it, these two lines are the
+     only thing that has to change. */
+  --font-display: "Century Gothic", "URW Gothic", Futura, "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: var(--font-display);
 
+  --step--2: clamp(0.69rem, 0.67rem + 0.09vw, 0.75rem);
   --step--1: clamp(0.83rem, 0.79rem + 0.18vw, 0.94rem);
-  --step-0: clamp(1.06rem, 1.00rem + 0.31vw, 1.25rem);
-  --step-1: clamp(1.33rem, 1.21rem + 0.58vw, 1.75rem);
-  --step-2: clamp(1.66rem, 1.44rem + 1.08vw, 2.62rem);
-  --step-3: clamp(2.07rem, 1.68rem + 1.95vw, 3.93rem);
-  --step-4: clamp(2.59rem, 1.90rem + 3.44vw, 5.90rem);
+  --step-0: clamp(1rem, 0.94rem + 0.25vw, 1.19rem);
+  --step-1: clamp(1.06rem, 0.97rem + 0.35vw, 1.25rem);
+  --step-2: clamp(1.33rem, 1.21rem + 0.58vw, 1.75rem);
+  --step-3: clamp(1.5rem, 1.31rem + 0.78vw, 2rem);
+  /* The wordmark caps at the comps' 72px and otherwise scales off the
+     viewport rather than a fluid clamp. "TSVETANOVA" plus 0.16em of
+     tracking is the widest thing on the page, and a width-derived size is
+     the only one that cannot overrun the gutter if the placeholder face is
+     later swapped for a wider one. */
+  --step-4: min(4.5rem, 10.5vw);
 
   --space-2xs: clamp(0.5rem, 0.47rem + 0.16vw, 0.62rem);
   --space-xs: clamp(0.75rem, 0.70rem + 0.24vw, 0.94rem);
@@ -27,10 +51,17 @@
   --space-2xl: clamp(4.5rem, 4.03rem + 2.34vw, 6.25rem);
   --space-3xl: clamp(6rem, 5.06rem + 4.69vw, 9.5rem);
 
-  --measure: 62ch;
-  --nav-h: 3.75rem;
+  /* The comps centre their prose in a column narrower than the page. */
+  --measure: 46rem;
+  /* Content width in the comps is 1315 of 1440, i.e. a 4rem gutter either
+     side. The wordmark, the picture strip, the nav and the footer rule all
+     line up on it. */
+  --content: 82rem;
 }
 
+/* Mirra was the display face before the Figma redesign. Nothing references it
+   now, but @font-face alone downloads nothing, and keeping the declaration
+   means restoring it is a one-word change if the geometric sans falls through. */
 @font-face {
   font-family: "Mirra";
   src: url("../fonts/mirra.woff2") format("woff2");
@@ -48,14 +79,11 @@ ul[class], ol[class] { list-style: none; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  /* The nav is position:fixed at the bottom edge, so the page must reserve
-     room for it or it sits on top of the footer at scroll-bottom. */
-  padding-block-end: calc(var(--nav-h) + var(--space-m));
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--step-0);
-  line-height: 1.55;
+  line-height: 1.6;
   font-variant-ligatures: common-ligatures;
   -webkit-font-smoothing: antialiased;
 }
@@ -63,7 +91,6 @@ body {
 img, picture, video { display: block; max-width: 100%; height: auto; }
 
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
-a:hover { font-style: italic; }
 
 :focus-visible {
   outline: 2px solid var(--ink);
@@ -72,7 +99,7 @@ a:hover { font-style: italic; }
 
 /* ---------- Utilities ---------- */
 .wrap {
-  width: min(100% - (2 * var(--space-m)), 78rem);
+  width: min(100% - (2 * var(--space-m)), var(--content));
   margin-inline: auto;
 }
 
@@ -100,104 +127,302 @@ a:hover { font-style: italic; }
 .skip-link:focus { transform: none; }
 
 /* ---------- Typography ---------- */
+/* The comps set every piece of chrome in wide-tracked uppercase and keep the
+   prose in sentence case. Tracking is the whole character of the design, so it
+   is expressed once here and inherited. */
 .display {
   font-family: var(--font-display);
   font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: 0.02em;
-  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.16em;
+  /* Tracking adds trailing space after the last letter, which pushes a centred
+     line visibly off-centre. Pulling it back by one unit re-centres it. */
+  margin-inline-start: 0.16em;
+  font-weight: 300;
+  text-transform: uppercase;
+  text-align: center;
 }
+.display a { text-decoration: none; }
 
 .section-title {
   font-family: var(--font-display);
-  font-size: var(--step-2);
-  letter-spacing: 0.14em;
+  font-size: var(--step-3);
+  letter-spacing: 0.22em;
+  margin-inline-start: 0.22em;
   text-transform: uppercase;
   font-weight: 400;
+  text-align: center;
 }
 
-.prose { max-width: var(--measure); text-wrap: pretty; hyphens: auto; }
+/* Prose is centred in the comps, not ranged left. */
+.prose {
+  max-width: var(--measure);
+  margin-inline: auto;
+  text-align: center;
+  text-wrap: pretty;
+}
 .prose p + p { margin-top: var(--space-s); }
 
 .caption {
   font-size: var(--step--1);
   color: var(--ink-muted);
-  font-style: italic;
 }
+
+/* ---------- Header ---------- */
+.site-header {
+  padding-block-start: var(--space-xl);
+}
+
+/* The name is two lines in every frame — "NIKOL" over "TSVETANOVA" — rather
+   than one line stretched to the picture width, which is what it used to be. */
+.wordmark-line { display: block; }
 
 /* ---------- Navigation ---------- */
-.site-nav { --nav-bg: var(--paper); }
+/* Static, centred, in the flow. It is no longer pinned to the bottom of the
+   viewport, so nothing has to reserve room for it. */
+.site-nav { margin-block-start: var(--space-l); }
 
-.nav-toggle {
-  min-height: var(--nav-h);
-  position: fixed;
-  inset-block-end: 0;
-  inset-inline: 0;
-  z-index: 12;
-  width: 100%;
-  padding: var(--space-s);
-  background: var(--nav-bg);
-  border: 0;
-  border-block-start: 1px solid var(--line);
-  color: inherit;
-  font-family: var(--font-display);
-  font-size: var(--step-1);
-  cursor: pointer;
+.nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2xs) var(--space-l);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.nav-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 14;
-  display: none;
-  place-content: center;
-  background: var(--paper);
-  text-align: center;
-}
-.nav-overlay[data-open="true"] { display: grid; }
-
-.nav-overlay a {
+.nav-list a {
   display: block;
-  padding: var(--space-2xs);
-  font-family: var(--font-display);
-  font-size: var(--step-3);
+  padding: var(--space-2xs) 0;
+  color: var(--ink-muted);
+  font-size: var(--step-1);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   text-decoration: none;
+  transition: color 180ms ease;
 }
 
+.nav-list a:hover,
+.nav-list a:focus-visible { color: var(--ink); }
+
+/* The current page is the one item in full black, a shade heavier. */
+.nav-list [aria-current="page"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Below the desktop breakpoint the row collapses into a "+" that opens a
+   full-screen sheet, exactly as the two iPhone frames draw it. */
+.nav-toggle,
 .nav-close {
-  position: absolute;
-  inset-block-start: var(--space-m);
-  inset-inline-end: var(--space-m);
+  display: none;
+  margin-inline: auto;
+  padding: var(--space-2xs) var(--space-s);
   background: none;
   border: 0;
   color: inherit;
   font-family: var(--font-display);
-  font-size: var(--step-2);
+  font-weight: 300;
+  line-height: 1;
   cursor: pointer;
 }
 
-@media (min-width: 64em) {
-  /* The desktop bar is taller than the mobile toggle, and the home page
-     reserves exactly this much room beneath the pictures — so pin it. */
-  :root { --nav-h: 5.25rem; }
+@media (max-width: 47.999em) {
+  .nav-toggle {
+    display: block;
+    font-size: var(--step-3);
+  }
 
-  .nav-toggle, .nav-close { display: none; }
-  .nav-overlay {
+  .nav-list {
     position: fixed;
-    inset: auto 0 0 0;
-    min-height: var(--nav-h);
-    align-items: center;
-    display: flex;
+    inset: 0;
+    z-index: 14;
+    display: none;
+    flex-direction: column;
+    align-content: center;
     justify-content: center;
     gap: var(--space-m);
-    padding: 0 var(--space-s);
-    background: var(--nav-bg);
-    border-block-start: 1px solid var(--line);
+    background: var(--paper);
   }
-  .nav-overlay a { font-family: var(--font-body); font-size: var(--step-1); padding: 0 var(--space-s); }
+  .nav-list[data-open="true"] { display: flex; }
+
+  .nav-list a {
+    font-size: var(--step-2);
+    text-align: center;
+  }
+
+  .nav-close {
+    display: block;
+    position: fixed;
+    inset-block-start: var(--space-2xl);
+    inset-inline: 0;
+    z-index: 15;
+    width: 3rem;
+    font-size: var(--step-3);
+  }
+  /* The close control belongs to the sheet: with the sheet shut there is
+     nothing for it to close, and a stray "×" under the name is confusing. */
+  .nav-list:not([data-open="true"]) ~ .nav-close { display: none; }
 }
 
-[aria-current="page"] { font-style: italic; }
+/* ---------- Footer ---------- */
+.site-footer {
+  margin-block-start: var(--space-3xl);
+  padding-block: var(--space-m) var(--space-2xl);
+  border-block-start: 1px solid var(--line);
+}
+
+/* Copyright ranged left, icons centred on the page — so the icon row is the
+   grid's middle column and the notice sits in the first. */
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.footer-note {
+  grid-column: 1;
+  font-size: var(--step--2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.socials {
+  grid-column: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.socials a {
+  display: block;
+  color: var(--ink);
+  transition: opacity 180ms ease;
+}
+.socials a:hover { opacity: 0.6; }
+
+.socials svg { display: block; width: 1.5rem; height: 1.5rem; fill: currentColor; }
+.socials img { width: auto; height: 1.15rem; }
+
+.footer-credit {
+  grid-column: 1 / -1;
+  margin-block-start: var(--space-m);
+  text-align: center;
+  font-size: var(--step--2);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 47.999em) {
+  .footer-inner { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .footer-note, .socials { grid-column: 1; }
+  .footer-note { order: 2; }
+  .socials { order: 1; }
+}
+
+/* ---------- Home ---------- */
+/* Order differs by breakpoint. On desktop the nav sits *under* the picture
+   strip (comps "Landing Page"); on mobile the "+" sits between the name and
+   the pictures (comp "iPhone 14 & 15 Pro Max - 1"). Same markup, same source
+   order for the keyboard — only the desktop nav moves. */
+.is-home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.is-home > .site-header { order: 1; }
+.is-home > .site-nav { order: 2; }
+.is-home > main { order: 3; }
+.is-home > .site-footer { order: 4; }
+
+/* The home frames carry only the icon row — no rule, no copyright. */
+.is-home .site-footer {
+  margin-block-start: var(--space-m);
+  padding-block-end: var(--space-2xl);
+  border-block-start: 0;
+}
+.is-home .footer-note,
+.is-home .footer-credit { display: none; }
+.is-home .socials { grid-column: 1 / -1; }
+
+@media (min-width: 48em) {
+  .is-home > main { order: 2; margin-block-start: var(--space-xl); }
+  .is-home > .site-nav { order: 3; margin-block-start: var(--space-2xl); }
+}
+
+/* ---------- Picture strip (home) ---------- */
+/* Four portraits, equal height, thin gaps — a single row on desktop, a 2x2
+   block on mobile. Above 48em the row also rotates (see site.js); the 2x2
+   block does not, because a rotating grid reads as a shuffle, not a strip. */
+.strip { position: relative; }
+
+.strip-track {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.strip-slide { aspect-ratio: 62 / 100; }
+
+.strip-slide picture,
+.strip-slide img { width: 100%; height: 100%; }
+
+.strip-slide img {
+  object-fit: cover;
+  /* Biased above centre: these are portraits, and the fixed ratio takes a few
+     percent off. Better off the feet than off the head. */
+  object-position: 50% 35%;
+}
+
+@media (min-width: 48em) {
+  .strip-track {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+  }
+  .strip-track::-webkit-scrollbar { display: none; }
+  .strip-track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+  /* Four across, matching the comps. The clones site.js appends sit beyond the
+     fourth and are scrolled into view one at a time. The gap is inherited from
+     the grid declaration above, so the basis subtracts three of them. */
+  .strip-slide {
+    flex: 0 0 calc((100% - (3 * var(--space-2xs))) / 4);
+  }
+}
+
+/* Load-in: a slow settle rather than a plain fade. On the image, so it stays
+   independent of any opacity the track itself is managing. */
+.strip-slide img {
+  animation: strip-in 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+.strip-slide:nth-child(1) img { animation-delay: 0ms; }
+.strip-slide:nth-child(2) img { animation-delay: 280ms; }
+.strip-slide:nth-child(3) img { animation-delay: 560ms; }
+.strip-slide:nth-child(4) img { animation-delay: 840ms; }
+
+@keyframes strip-in {
+  from { opacity: 0; transform: translateY(1.25rem) scale(1.03); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip-track { scroll-behavior: auto; }
+  .strip-slide img { animation: none; }
+}
+
+.no-js .strip-slide img { animation: none; }
 
 /* ---------- Galleries ---------- */
 .grid-gallery {
@@ -208,7 +433,7 @@ a:hover { font-style: italic; }
 
 .grid-gallery.is-wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); }
 
-/* Mosaic: the wide/narrow rhythm the original gallery had. Four columns, most
+/* Mosaic: the wide/narrow rhythm of the Gallery frames. Four columns, most
    images spanning two, a few spanning one. The two aspect ratios are chosen so
    a wide pair and a narrow trio come out the same height and the rows line up. */
 .mosaic {
@@ -233,135 +458,69 @@ a:hover { font-style: italic; }
 
 .figure { margin: 0; }
 .figure img { width: 100%; }
-.figure figcaption { margin-block-start: var(--space-2xs); font-size: var(--step--1); color: var(--ink-muted); }
+
+/* Caption below the picture is the fallback. Where the pointer can hover, the
+   Gallery frame puts it *over* the picture behind a cream wash instead. */
+.figure figcaption {
+  margin-block-start: var(--space-2xs);
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+@media (hover: hover) {
+  .mosaic .figure { position: relative; }
+
+  .mosaic .figure figcaption {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-content: center;
+    margin: 0;
+    padding: var(--space-s);
+    background: var(--wash);
+    color: var(--ink);
+    font-size: var(--step-0);
+    /* Not display:none — the caption stays in the accessibility tree and in
+       the page for anyone who never hovers. */
+    opacity: 0;
+    transition: opacity 240ms ease;
+  }
+
+  .mosaic .figure:hover figcaption,
+  .mosaic .figure:focus-within figcaption { opacity: 1; }
+}
 
 .span-2 { grid-column: span 2; }
 @media (max-width: 47.99em) { .span-2 { grid-column: auto; } }
 
 .is-grayscale img { filter: grayscale(1); }
 
-/* ---------- Carousel ---------- */
-/* One component for both breakpoints. The track is a native horizontally
-   scrolling flex row, so swipe-to-scroll on touch comes from the browser
-   rather than from gesture-handling JS. The slides are duplicated once by JS
-   to make a seamless loop: with four images and three visible there are only
-   two scroll positions otherwise, which reads as a shuffle, not a rotation. */
-.carousel { position: relative; }
-
-.carousel-track {
-  display: flex;
-  gap: var(--space-s);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overscroll-behavior-x: contain;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-.carousel-track::-webkit-scrollbar { display: none; }
-.carousel-track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-
-.carousel-slide {
-  flex: 0 0 100%;
-  /* A fixed ratio is what makes every image the same height. The sources run
-     from 0.61 to 0.73 wide-over-tall, so 2:3 crops only a few percent. */
-  aspect-ratio: 2 / 3;
-}
-
-.carousel-slide picture,
-.carousel-slide img {
-  width: 100%;
-  height: 100%;
-}
-.carousel-slide img {
-  object-fit: cover;
-  /* Biased above centre: these are portraits, and the narrower sources lose a
-     few percent top and bottom to the fixed ratio. Better to take it off the
-     feet than off the head. */
-  object-position: 50% 35%;
-}
-
-@media (min-width: 64em) {
-  .carousel-slide { flex-basis: calc((100% - (2 * var(--space-s))) / 3); }
-}
-
-/* Load-in: a slow settle rather than a plain fade. Applied to the image so it
-   stays independent of any opacity the track itself is managing. */
-.carousel-slide img {
-  animation: carousel-in 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
-}
-.carousel-slide:nth-child(1) img { animation-delay: 0ms; }
-.carousel-slide:nth-child(2) img { animation-delay: 280ms; }
-.carousel-slide:nth-child(3) img { animation-delay: 560ms; }
-.carousel-slide:nth-child(4) img { animation-delay: 840ms; }
-
-@keyframes carousel-in {
-  from { opacity: 0; transform: translateY(1.25rem) scale(1.03); }
-  to { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .carousel-track { scroll-behavior: auto; }
-  .carousel-slide img { animation: none; }
-}
-
-.no-js .carousel-slide img { animation: none; }
-
-/* ---------- Bio ---------- */
-/* Portrait on the left, text on the right. The portrait is capped rather than
-   proportional so the text column keeps a readable measure at any width. */
-.bio {
+/* ---------- Contact ---------- */
+/* A white card carrying the agency's mark, then the representation lines.
+   The card is a placeholder: no Posche logo asset exists in the repo and the
+   Figma cannot be exported from without editor access, so the agency name is
+   set in the site's own type until the real mark arrives. */
+.agency {
   display: grid;
-  gap: var(--space-xl);
-  align-items: start;
-  margin-block-start: var(--space-l);
-}
-.bio-portrait { margin: 0; }
-.bio-portrait img { width: 100%; }
-
-@media (min-width: 48em) {
-  .bio { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
+  justify-items: center;
+  gap: var(--space-m);
+  text-align: center;
 }
 
-/* ---------- Wordmark ---------- */
-/* The viewBox is the glyphs' own measured ratio (6.576:1 in Mirra), so the
-   name scales to the container's exact width with natural letterforms — its
-   first and last strokes line up with the edges of the pictures below. */
-.wordmark { display: block; width: 100%; height: auto; }
-.wordmark text { font-family: var(--font-display); fill: var(--ink); }
-
-/* ---------- Home ---------- */
-/* The home page is the carousel and nothing else, so it sits centred in the
-   space between the header and the fixed nav rather than stacking to the top
-   and leaving a gap underneath. */
-.is-home {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  /* Tight to the nav: the pictures should sit just above it, not float in a
-     band of empty space. */
-  padding-block-end: calc(var(--nav-h) + var(--space-2xs));
-}
-.is-home header { padding-block-start: var(--space-l); }
-
-/* The pictures take whatever height is left once the name and the nav have
-   had theirs, rather than deriving height from their own width and pushing
-   the page past the viewport. min-height:0 is what lets a grid child shrink. */
-.is-home main {
-  /* height:0 plus flex-grow means the used height comes purely from the space
-     left over, never from the content. Without it the chain is circular — the
-     slides' height:100% resolves against an indefinite parent, falls back to
-     the images' intrinsic height, and the page overflows under the nav. */
-  flex: 1 1 0;
-  height: 0;
-  min-height: 0;
+.agency-card {
   display: grid;
-  padding-block-start: var(--space-s);
+  place-content: center;
+  width: min(100%, 11rem);
+  aspect-ratio: 5 / 3;
+  padding: var(--space-s);
+  background: var(--panel);
+  font-size: var(--step--2);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.is-home .carousel { min-height: 0; display: grid; }
-.is-home .carousel-track { height: 100%; min-height: 0; }
-.is-home .carousel-slide { aspect-ratio: auto; height: 100%; min-height: 0; }
 
 /* ---------- Lightbox ---------- */
 .lightbox {
@@ -420,21 +579,21 @@ a:hover { font-style: italic; }
 }
 
 /* No-JS fallback. A <button> cannot drive :target, so instead of a broken
-   toggle the nav simply renders as a plain static list. Nothing to click,
-   nothing to trap, fully keyboard accessible. */
+   toggle the nav simply renders as the plain static row it is on desktop. */
 .no-js .nav-toggle,
 .no-js .nav-close { display: none; }
 
-.no-js .nav-overlay {
-  position: static;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-m);
-  padding: var(--space-m);
-  border-block-start: 1px solid var(--line);
+@media (max-width: 47.999em) {
+  .no-js .nav-list {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: none;
+  }
+  .no-js .nav-list a { font-size: var(--step-1); }
 }
-.no-js .nav-overlay a { font-family: var(--font-body); font-size: var(--step-1); }
 
 /* Without JS nothing ever sets data-visible, so pin revealed state. */
 .no-js .reveal { translate: none; transition: none; }

@@ -221,6 +221,7 @@ assets/img/hero-04-2400.webp
 assets/img/hero-04-640.avif
 assets/img/hero-04-640.jpg
 assets/img/hero-04-640.webp
+assets/img/imdb.png
 assets/img/reel-comedic-1280.avif
 assets/img/reel-comedic-1280.jpg
 assets/img/reel-comedic-1280.webp
@@ -238,7 +239,9 @@ assets/video/.gitkeep
 contact.html
 favicon.svg
 gallery.html
+headshots.html
 index.html
 reel.html
+resume.html
 robots.txt
 sitemap.xml

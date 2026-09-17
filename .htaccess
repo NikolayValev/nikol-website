@@ -55,8 +55,10 @@
   # spaces. Matching the %20 form would be dead code.
   RewriteRule "^IMAGES/Nikol Tsvetanova Resume\.pdf$" /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
 
-  # Retired page: headshots now live on the home page.
-  RewriteRule ^headshots(\.html)?$ / [R=301,L]
+  # /headshots was a 301 to the home page while headshots lived there. The
+  # Figma nav names it again, so headshots.html exists and the redirect is
+  # gone: leaving it in would send every visitor who clicks Headshots straight
+  # back to the home page. Restore it if Headshots leaves the nav again.
 
   # Old .html URLs redirect to the clean form. THE_REQUEST guard means this
   # matches only real browser requests, never the internal rewrite below,

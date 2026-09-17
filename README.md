@@ -22,15 +22,19 @@ production.
 Before deploying, check nothing broke:
 
 ```bash
-node tools/check-links.mjs                              # every local reference resolves
-npx html-validate index.html about.html reel.html gallery.html 404.html
+node tools/check-links.mjs      # every local reference resolves
+node tools/strip-test.mjs      # home strip, nav, and the redesigned pages
+node tools/gallery-test.mjs    # the gallery mosaic still reads as a mosaic
+npx html-validate index.html about.html headshots.html reel.html resume.html gallery.html contact.html 404.html
 ```
+
+The two puppeteer scripts need `node tools/serve.mjs` already running.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `index.html` `about.html` `reel.html` `gallery.html` `404.html` | The site. Deployed as-is. |
+| `index.html` `about.html` `headshots.html` `reel.html` `resume.html` `gallery.html` `contact.html` `404.html` | The site. Deployed as-is. |
 | `assets/` | Stylesheet, JS module, font, generated images, résumé PDF. Deployed. |
 | `.htaccess` | Caching, compression, clean URLs, redirects. Deployed. |
 | `_source/` | Original photographs and fonts. **Never deployed.** |
@@ -76,8 +80,35 @@ that manifest**: `srcset` may only list widths an image actually has. Sources
 here range from 1063px to 5075px wide, so not every image has every size, and a
 copy-pasted three-width `srcset` will 404.
 
+## The design
+
+The current look comes from Mila Tsvetanova's Figma file, "Nikol Tsvetanova
+Website". Two things about it are worth knowing before you touch the CSS:
+
+- **The display face is a placeholder.** The comps are set in a light geometric
+  sans whose name is not readable from the file — the Figma MCP needs editor
+  access and the link we have is view-only. `--font-display` in
+  `assets/css/site.css` is a system stack standing in for it. Everything else
+  in the type system (case, tracking, sizes, weights) is measured off the
+  comps, so naming the real font is a one-line change.
+- **The inactive nav grey is deliberately darker than the comps.** Mila's grey
+  samples as `#8B8680`, which is 3.02:1 against the cream — below WCAG AA, on
+  the primary navigation. The token is `#6B6762` (4.69:1) instead. The reason
+  is written next to it.
+
+`docs/` and `.superpowers/` record the pre-Figma rebuild, not this design.
+
 ## Things that will bite you
 
+- **`/headshots` is a placeholder page, and `.htaccess` no longer redirects
+  it.** The Figma nav names Headshots, so `headshots.html` exists, is `noindex`,
+  and is kept out of `sitemap.xml`. `headshot-01` through `headshot-07` are
+  already optimized and waiting. If Headshots leaves the nav again, restore the
+  `RewriteRule ^headshots(\.html)?$ / [R=301,L]` line.
+- **`assets/img/imdb.png` is not produced by `optimize-images.mjs`.** That
+  script emits AVIF/WebP/JPEG, and JPEG would throw away the mark's
+  transparency. It was resized once from `_source/images/IMDB.png`; redo it by
+  hand if it ever changes.
 - **Image filenames are not content-hashed**, and `.htaccess` caches them for 30
   days. Replacing a photo under the same name means returning visitors keep the
   old one until that expires. Use a new filename when it matters.

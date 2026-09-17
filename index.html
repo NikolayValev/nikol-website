@@ -50,61 +50,100 @@
 <!-- <main> carries tabindex="-1": without it the browser scrolls to the anchor
      but leaves focus on <body>, so the skip link does not actually skip. -->
 
-<header class="wrap">
+<header class="site-header wrap">
   <h1 class="display">
-    <span class="visually-hidden">Nikol Tsvetanova</span>
-    <svg class="wordmark" aria-hidden="true" viewBox="0 0 658 100">
-      <text x="0" y="75" font-size="100" textLength="658" lengthAdjust="spacing">Nikol Tsvetanova</text>
-    </svg>
+    <span class="wordmark-line">Nikol</span>
+    <span class="wordmark-line">Tsvetanova</span>
   </h1>
 </header>
 
-<nav class="site-nav" aria-label="Primary">
-  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
-  <div class="nav-overlay" id="menu" data-open="false">
-    <button class="nav-close" type="button" aria-label="Close menu">×</button>
-    <a href="/" aria-current="page">Home</a>
-    <a href="/about">About</a>
-    <a href="/reel">Reel</a>
-    <a href="/contact">Contact</a>
-    <a href="/gallery">Gallery</a>
-  </div>
+<!-- Source order is name, nav, pictures on every page, which is also the
+     mobile order in the comps. CSS moves the nav below the pictures at desktop
+     width, where the comps put it, without reordering the keyboard path. -->
+<nav class="site-nav wrap" aria-label="Primary">
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">
+    <span aria-hidden="true">+</span><span class="visually-hidden">Menu</span>
+  </button>
+  <ul class="nav-list" id="menu" data-open="false">
+    <li><a href="/about">About</a></li>
+    <li><a href="/headshots">Headshots</a></li>
+    <li><a href="/reel">Reel</a></li>
+    <li><a href="/resume">Resume</a></li>
+    <li><a href="/gallery">Gallery</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+  <button class="nav-close" type="button">
+    <span aria-hidden="true">&times;</span><span class="visually-hidden">Close menu</span>
+  </button>
 </nav>
 
-<main id="main" tabindex="-1">
-  <section class="wrap carousel" aria-roledescription="carousel" aria-label="Nikol Tsvetanova in performance">
-    <ul class="carousel-track" tabindex="0" aria-label="Images. Use the arrow keys to scroll.">
-      <li class="carousel-slide">
+<main id="main" tabindex="-1" class="wrap">
+  <section class="strip" aria-label="Nikol Tsvetanova in performance">
+    <ul class="strip-track" aria-label="Images. Use the arrow keys to scroll.">
+      <li class="strip-slide">
         <picture>
-          <source type="image/avif" srcset="/assets/img/hero-01-640.avif 640w, /assets/img/hero-01-1280.avif 1280w, /assets/img/hero-01-2400.avif 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <source type="image/webp" srcset="/assets/img/hero-01-640.webp 640w, /assets/img/hero-01-1280.webp 1280w, /assets/img/hero-01-2400.webp 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <img src="/assets/img/hero-01-2400.jpg" width="3209" height="4971" alt="Nikol Tsvetanova against a deep navy backdrop in a black top, hair straight with blunt bangs, gaze level and unsmiling." fetchpriority="high" decoding="async">
+          <source type="image/avif" srcset="/assets/img/hero-01-640.avif 640w, /assets/img/hero-01-1280.avif 1280w, /assets/img/hero-01-2400.avif 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <source type="image/webp" srcset="/assets/img/hero-01-640.webp 640w, /assets/img/hero-01-1280.webp 1280w, /assets/img/hero-01-2400.webp 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <img src="/assets/img/hero-01-1280.jpg" width="3209" height="4971" alt="Nikol Tsvetanova against a deep navy backdrop in a black top, hair straight with blunt bangs, gaze level and unsmiling." fetchpriority="high" decoding="async">
         </picture>
       </li>
-      <li class="carousel-slide">
+      <li class="strip-slide">
         <picture>
-          <source type="image/avif" srcset="/assets/img/hero-02-640.avif 640w, /assets/img/hero-02-1280.avif 1280w, /assets/img/hero-02-2400.avif 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <source type="image/webp" srcset="/assets/img/hero-02-640.webp 640w, /assets/img/hero-02-1280.webp 1280w, /assets/img/hero-02-2400.webp 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <img src="/assets/img/hero-02-2400.jpg" width="3308" height="5232" alt="Nikol Tsvetanova laughing in a white ruffled top against a warm tan backdrop." loading="lazy" decoding="async">
+          <source type="image/avif" srcset="/assets/img/hero-02-640.avif 640w, /assets/img/hero-02-1280.avif 1280w, /assets/img/hero-02-2400.avif 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <source type="image/webp" srcset="/assets/img/hero-02-640.webp 640w, /assets/img/hero-02-1280.webp 1280w, /assets/img/hero-02-2400.webp 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <img src="/assets/img/hero-02-1280.jpg" width="3308" height="5232" alt="Nikol Tsvetanova laughing in a white ruffled top against a warm tan backdrop." loading="lazy" decoding="async">
         </picture>
       </li>
-      <li class="carousel-slide">
+      <li class="strip-slide">
         <picture>
-          <source type="image/avif" srcset="/assets/img/hero-03-640.avif 640w, /assets/img/hero-03-1280.avif 1280w, /assets/img/hero-03-2400.avif 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <source type="image/webp" srcset="/assets/img/hero-03-640.webp 640w, /assets/img/hero-03-1280.webp 1280w, /assets/img/hero-03-2400.webp 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <img src="/assets/img/hero-03-2400.jpg" width="2896" height="4765" alt="Nikol Tsvetanova in a denim jacket against an olive-green backdrop, a quiet half-smile." loading="lazy" decoding="async">
+          <source type="image/avif" srcset="/assets/img/hero-03-640.avif 640w, /assets/img/hero-03-1280.avif 1280w, /assets/img/hero-03-2400.avif 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <source type="image/webp" srcset="/assets/img/hero-03-640.webp 640w, /assets/img/hero-03-1280.webp 1280w, /assets/img/hero-03-2400.webp 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <img src="/assets/img/hero-03-1280.jpg" width="2896" height="4765" alt="Nikol Tsvetanova in a denim jacket against an olive-green backdrop, a quiet half-smile." loading="lazy" decoding="async">
         </picture>
       </li>
-      <li class="carousel-slide">
+      <li class="strip-slide">
         <picture>
-          <source type="image/avif" srcset="/assets/img/hero-04-640.avif 640w, /assets/img/hero-04-1280.avif 1280w, /assets/img/hero-04-2400.avif 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <source type="image/webp" srcset="/assets/img/hero-04-640.webp 640w, /assets/img/hero-04-1280.webp 1280w, /assets/img/hero-04-2400.webp 2400w" sizes="(min-width: 64em) 33vw, 100vw">
-          <img src="/assets/img/hero-04-2400.jpg" width="3648" height="4977" alt="Nikol Tsvetanova in a black leather jacket against a charcoal backdrop, an intense, unguarded stare." loading="lazy" decoding="async">
+          <source type="image/avif" srcset="/assets/img/hero-04-640.avif 640w, /assets/img/hero-04-1280.avif 1280w, /assets/img/hero-04-2400.avif 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <source type="image/webp" srcset="/assets/img/hero-04-640.webp 640w, /assets/img/hero-04-1280.webp 1280w, /assets/img/hero-04-2400.webp 2400w" sizes="(min-width: 48em) 25vw, 50vw">
+          <img src="/assets/img/hero-04-1280.jpg" width="3648" height="4977" alt="Nikol Tsvetanova in a black leather jacket against a charcoal backdrop, an intense, unguarded stare." loading="lazy" decoding="async">
         </picture>
       </li>
     </ul>
   </section>
 </main>
+
+<footer class="site-footer wrap">
+  <div class="footer-inner">
+    <p class="footer-note">&copy; 2026 Nikol Tsvetanova</p>
+    <ul class="socials">
+      <li>
+        <a href="https://www.instagram.com/nikoltsve/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <circle cx="17.3" cy="6.7" r="1.3" fill="currentColor"></circle>
+          </svg>
+          <span class="visually-hidden">Instagram</span>
+        </a>
+      </li>
+      <li>
+        <a href="https://www.youtube.com/channel/UCEnJ1HoK6WWkHRKqN8v5GLw" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="1.5" y="5" width="21" height="14" rx="4.2" fill="currentColor"></rect>
+            <path d="M10 9.1 15.6 12 10 14.9Z" fill="var(--paper)"></path>
+          </svg>
+          <span class="visually-hidden">YouTube</span>
+        </a>
+      </li>
+      <li>
+        <a href="https://www.imdb.com/name/nm13031939/" target="_blank" rel="noopener">
+          <img src="/assets/img/imdb.png" width="157" height="64" alt="" decoding="async">
+          <span class="visually-hidden">IMDb</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>
 
 </body>
 </html>

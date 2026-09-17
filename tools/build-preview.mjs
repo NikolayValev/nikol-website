@@ -19,9 +19,11 @@ const OUT_DIR = join(ROOT, 'preview');
 const PAGES = [
   ['index.html', 'Home'],
   ['about.html', 'About'],
+  ['headshots.html', 'Headshots'],
   ['reel.html', 'Reel'],
-  ['contact.html', 'Contact'],
+  ['resume.html', 'Resume'],
   ['gallery.html', 'Gallery'],
+  ['contact.html', 'Contact'],
   ['404.html', '404'],
 ];
 
@@ -226,7 +228,9 @@ const shell = `<title>Nikol Tsvetanova Preview</title>
   iframe {
     width: 100%;
     height: 100%;
-    background: #E8E6E4;
+    /* The site's paper colour, so the frame does not flash the old grey
+       before srcdoc paints. Keep in step with --paper in site.css. */
+    background: #F2E9E4;
     border: 0;
     border-radius: 2px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.3);

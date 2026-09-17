@@ -1,36 +1,41 @@
 // All site behavior. Loaded as a module, so it is deferred by default.
-// Every feature degrades: with JS off, the nav overlay is reachable via
-// a plain static list, gallery images are plain links, and the reel is a link.
+// Every feature degrades: with JS off, the nav renders as a plain static row,
+// gallery images are plain links, and the reel is a link.
 
 document.documentElement.classList.remove('no-js');
 
+// One breakpoint, named once. Below it the nav is a sheet behind a "+" and the
+// picture strip is a static 2x2 block; at or above it the nav is a row and the
+// strip is a rotating line of four. Both must agree with site.css.
+const WIDE = '(min-width: 48em)';
+
 function initNav() {
   const toggle = document.querySelector('.nav-toggle');
-  const overlay = document.querySelector('.nav-overlay');
+  const list = document.querySelector('.nav-list');
   const close = document.querySelector('.nav-close');
-  if (!toggle || !overlay) return;
+  if (!toggle || !list) return;
 
-  // The overlay is a modal only below the desktop breakpoint. At >=64em the
-  // same element is a permanently visible nav bar, and trapping focus there
-  // strands the keyboard user on the last link with no way into the page.
-  const isModal = window.matchMedia('(max-width: 63.999em)');
+  // The list is a modal only below the breakpoint. At or above it the same
+  // element is a permanently visible nav row, and trapping focus there strands
+  // the keyboard user on the last link with no way into the page.
+  const wide = window.matchMedia(WIDE);
 
   // Only rendered elements can take focus. .nav-close is display:none at
   // desktop width, and calling focus() on it silently does nothing.
   const focusable = () =>
-    [...overlay.querySelectorAll('a[href], button:not([disabled])')].filter(
+    [...list.querySelectorAll('a[href], button:not([disabled])')].filter(
       (el) => el.offsetParent !== null,
     );
 
   function open() {
-    overlay.dataset.open = 'true';
+    list.dataset.open = 'true';
     toggle.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
     focusable()[0]?.focus();
   }
 
   function shut() {
-    overlay.dataset.open = 'false';
+    list.dataset.open = 'false';
     toggle.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
     toggle.focus();
@@ -39,28 +44,28 @@ function initNav() {
   toggle.addEventListener('click', open);
   close?.addEventListener('click', shut);
 
-  // A nav link may open a new tab (Resume) or navigate away. Either way the
-  // modal is done, and leaving body overflow hidden would strand the visitor
-  // on an unscrollable page when they come back.
-  for (const link of overlay.querySelectorAll('a[href]')) {
+  // A nav link may open a new tab or navigate away. Either way the sheet is
+  // done, and leaving body overflow hidden would strand the visitor on an
+  // unscrollable page when they come back.
+  for (const link of list.querySelectorAll('a[href]')) {
     link.addEventListener('click', () => {
-      if (overlay.dataset.open === 'true') shut();
+      if (list.dataset.open === 'true') shut();
     });
   }
 
-  // Crossing into desktop width leaves no modal to close, so release the
+  // Crossing into desktop width leaves no sheet to close, so release the
   // scroll lock rather than stranding the page unscrollable with no overlay
   // visible to explain why.
-  isModal.addEventListener('change', (event) => {
-    if (event.matches) return;
-    overlay.dataset.open = 'false';
+  wide.addEventListener('change', (event) => {
+    if (!event.matches) return;
+    list.dataset.open = 'false';
     toggle.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
   });
 
-  overlay.addEventListener('keydown', (event) => {
-    // No trap unless the overlay is genuinely open AS a modal.
-    if (overlay.dataset.open !== 'true' || !isModal.matches) return;
+  list.addEventListener('keydown', (event) => {
+    // No trap unless the sheet is genuinely open AS a modal.
+    if (list.dataset.open !== 'true' || wide.matches) return;
 
     if (event.key === 'Escape') {
       shut();
@@ -140,40 +145,57 @@ function initVideoFacade() {
   }
 }
 
-function initCarousel() {
-  const carousel = document.querySelector('.carousel');
-  if (!carousel) return;
+// The home picture strip. Only a rotation where the strip is actually a row:
+// below 48em the comps draw a static 2x2 block, and cloning into a two-column
+// grid would just make it eight pictures deep.
+function initStrip() {
+  const strip = document.querySelector('.strip');
+  if (!strip) return;
 
-  const track = carousel.querySelector('.carousel-track');
-  const originals = [...carousel.querySelectorAll('.carousel-slide')];
+  const track = strip.querySelector('.strip-track');
+  const originals = [...strip.querySelectorAll('.strip-slide')];
   if (!track || originals.length === 0) return;
 
   const DELAY = 3200;
   const RESUME_AFTER = 5000;
+  const wide = window.matchMedia(WIDE);
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let clones = [];
+  let timer = null;
+  let resumeTimer = null;
+  let settle = null;
 
   // Duplicate the slides once. Because the second copy is identical to the
   // first, jumping the scroll position by exactly one loop width is invisible,
   // which is what makes continuous one-direction motion possible without the
   // strip ever visibly snapping back.
-  for (const slide of originals) {
-    const clone = slide.cloneNode(true);
-    clone.setAttribute('aria-hidden', 'true');
-    track.append(clone);
+  function addClones() {
+    if (clones.length > 0) return;
+    clones = originals.map((slide) => {
+      const clone = slide.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      track.append(clone);
+      return clone;
+    });
   }
 
-  let timer = null;
-  let resumeTimer = null;
+  function removeClones() {
+    for (const clone of clones) clone.remove();
+    clones = [];
+  }
 
-  const gap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
-  const step = () => originals[0].getBoundingClientRect().width + gap();
+  // Measured rather than computed: with four slides laid out by flex-basis and
+  // a fluid gap, the distance from one slide to the next is the only number
+  // that is reliably right.
+  const step = () =>
+    originals.length > 1
+      ? originals[1].offsetLeft - originals[0].offsetLeft
+      : originals[0].getBoundingClientRect().width;
   const loopWidth = () => step() * originals.length;
 
   // The position is kept inside [0, loopWidth). Beyond that the track simply
-  // runs out of scrollable width — with three slides visible out of eight, the
-  // furthest scrollLeft can reach is five steps, so parking a loop in and then
-  // advancing rightward stalls after one move.
-  let settle = null;
+  // runs out of scrollable width.
   function normalizeSoon() {
     clearTimeout(settle);
     settle = setTimeout(() => {
@@ -202,14 +224,24 @@ function initCarousel() {
   }
 
   function play() {
-    if (calm.matches) return;
+    if (calm.matches || !wide.matches) return;
     stop();
+    addClones();
     timer = setInterval(advance, DELAY);
   }
 
   function stop() {
     if (timer !== null) clearInterval(timer);
     timer = null;
+  }
+
+  // Back to the 2x2 block: no rotation, no clones, and the scroll position
+  // reset so a grid does not start life scrolled sideways.
+  function teardown() {
+    stop();
+    clearTimeout(resumeTimer);
+    removeClones();
+    track.scrollLeft = 0;
   }
 
   // Hover, focus, and touch all hand control to the visitor. There is no
@@ -220,21 +252,25 @@ function initCarousel() {
     resumeTimer = setTimeout(play, RESUME_AFTER);
   }
 
-  carousel.addEventListener('pointerenter', stop);
-  carousel.addEventListener('pointerleave', play);
-  carousel.addEventListener('focusin', stop);
-  carousel.addEventListener('focusout', play);
+  strip.addEventListener('pointerenter', stop);
+  strip.addEventListener('pointerleave', play);
+  strip.addEventListener('focusin', stop);
+  strip.addEventListener('focusout', play);
   track.addEventListener('pointerdown', hold);
   track.addEventListener('touchstart', hold, { passive: true });
   track.addEventListener('scroll', normalizeSoon, { passive: true });
 
-  addEventListener('resize', () => {
-    stop();
-    track.scrollLeft = 0;
-    if (!calm.matches) play();
-  }, { passive: true });
+  addEventListener(
+    'resize',
+    () => {
+      stop();
+      track.scrollLeft = 0;
+      play();
+    },
+    { passive: true },
+  );
 
-  // Nothing is gained by advancing a carousel nobody can see.
+  // Nothing is gained by advancing a strip nobody can see.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();
     else play();
@@ -245,10 +281,20 @@ function initCarousel() {
     else play();
   });
 
-  requestAnimationFrame(() => {
-    track.scrollLeft = 0;
-    play();
+  wide.addEventListener('change', (event) => {
+    if (event.matches) play();
+    else teardown();
   });
+
+  if (wide.matches) {
+    // The track is only focusable, and only announced as scrollable, while it
+    // actually is one.
+    track.tabIndex = 0;
+    requestAnimationFrame(() => {
+      track.scrollLeft = 0;
+      play();
+    });
+  }
 }
 
 function initReveal() {
@@ -275,7 +321,7 @@ function initReveal() {
 }
 
 initNav();
-initCarousel();
+initStrip();
 initLightbox();
 initVideoFacade();
 initReveal();
