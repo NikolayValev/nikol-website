@@ -31,7 +31,7 @@ echo
 # 1. THE BIG ONE. A malformed .htaccess returns 500 for every page. If this
 #    fails, restore the backed-up .htaccess immediately — the site is down.
 echo "Site is up (a 500 here means .htaccess is malformed — restore the backup NOW):"
-for p in / /about /reel /contact /gallery; do
+for p in / /about /reel /gallery /headshots; do
   check "GET $p" "$(code "$HOST$p")" "200"
 done
 echo
@@ -41,8 +41,15 @@ echo "Old URLs still resolve:"
 check "/about.html redirects"    "$(code "$HOST/about.html")" "301"
 check "  -> to"                  "$(loc  "$HOST/about.html")" "$HOST/about"
 check "/gallery.html redirects"  "$(code "$HOST/gallery.html")" "301"
-check "/headshots.html retired"  "$(code "$HOST/headshots.html")" "301"
-check "  -> to"                  "$(loc  "$HOST/headshots.html")" "$HOST/"
+# Headshots is a page again, so its .html URL takes the ordinary clean-URL hop
+# rather than the old retirement redirect to the home page.
+check "/headshots.html redirects" "$(code "$HOST/headshots.html")" "301"
+check "  -> to"                  "$(loc  "$HOST/headshots.html")" "$HOST/headshots"
+# Resume and Contact were folded into About.
+check "/resume redirects"        "$(code "$HOST/resume")" "301"
+check "  -> to"                  "$(loc  "$HOST/resume")" "$HOST/about#resume"
+check "/contact redirects"       "$(code "$HOST/contact")" "301"
+check "  -> to"                  "$(loc  "$HOST/contact")" "$HOST/about#contact"
 echo
 
 # 3. The resume PDF. Its 2024 URL may have gone to casting directors.

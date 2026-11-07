@@ -2,7 +2,7 @@
 
 The personal site of Nikol Tsvetanova, actor, New York.
 
-Four pages plus a 404, hand-written and static, hosted on HostGator shared
+Five pages plus a 404, hand-written and static, hosted on HostGator shared
 Apache and deployed by uploading files. **There is no build step** — the HTML,
 CSS, and JS in this repo are exactly what the server serves.
 
@@ -25,7 +25,7 @@ Before deploying, check nothing broke:
 node tools/check-links.mjs      # every local reference resolves
 node tools/strip-test.mjs      # home strip, nav, and the redesigned pages
 node tools/gallery-test.mjs    # the gallery mosaic still reads as a mosaic
-npx html-validate index.html about.html headshots.html reel.html resume.html gallery.html contact.html 404.html
+npx html-validate index.html about.html headshots.html reel.html gallery.html 404.html
 ```
 
 The two puppeteer scripts need `node tools/serve.mjs` already running.
@@ -34,7 +34,7 @@ The two puppeteer scripts need `node tools/serve.mjs` already running.
 
 | Path | What it is |
 |---|---|
-| `index.html` `about.html` `headshots.html` `reel.html` `resume.html` `gallery.html` `contact.html` `404.html` | The site. Deployed as-is. |
+| `index.html` `about.html` `headshots.html` `reel.html` `gallery.html` `404.html` | The site. Deployed as-is. |
 | `assets/` | Stylesheet, JS module, font, generated images, résumé PDF. Deployed. |
 | `.htaccess` | Caching, compression, clean URLs, redirects. Deployed. |
 | `_source/` | Original photographs and fonts. **Never deployed.** |

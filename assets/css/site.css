@@ -41,6 +41,8 @@
      the only one that cannot overrun the gutter if the placeholder face is
      later swapped for a wider one. */
   --step-4: min(4.5rem, 10.5vw);
+  /* The same name on one line, at desktop width. See .display below. */
+  --step-4-one-line: min(4.5rem, 7vw);
 
   --space-2xs: clamp(0.5rem, 0.47rem + 0.16vw, 0.62rem);
   --space-xs: clamp(0.75rem, 0.70rem + 0.24vw, 0.94rem);
@@ -166,6 +168,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 .caption {
   font-size: var(--step--1);
   color: var(--ink-muted);
+  text-align: center;
 }
 
 /* ---------- Header ---------- */
@@ -173,9 +176,20 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   padding-block-start: var(--space-xl);
 }
 
-/* The name is two lines in every frame — "NIKOL" over "TSVETANOVA" — rather
-   than one line stretched to the picture width, which is what it used to be. */
+/* Phones: two lines, "NIKOL" over "TSVETANOVA", as the iPhone frames draw it. */
 .wordmark-line { display: block; }
+
+/* Desktop: one line, sitting closer to the top, so the home page fits a
+   laptop screen without scrolling. Every page gets the same treatment so the
+   name never jumps between one line and two as you click through the nav.
+   "NIKOL TSVETANOVA" with its tracking measures ~11em in the placeholder face;
+   7vw keeps it inside the gutters down to 768px with room for a wider final
+   face. Were that face wider still, the line wraps rather than overflowing. */
+@media (min-width: 48em) {
+  .site-header { padding-block-start: var(--space-m); }
+  .display { font-size: var(--step-4-one-line); }
+  .wordmark-line { display: inline; }
+}
 
 /* ---------- Navigation ---------- */
 /* Static, centred, in the flow. It is no longer pinned to the bottom of the
@@ -324,6 +338,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   .footer-note, .socials { grid-column: 1; }
   .footer-note { order: 2; }
   .socials { order: 1; }
+  /* Stacked, the small print reads last: icons, copyright, then credits. */
+  .footer-credit { order: 3; margin-block-start: var(--space-2xs); }
 }
 
 /* ---------- Home ---------- */
@@ -352,8 +368,31 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 .is-home .socials { grid-column: 1 / -1; }
 
 @media (min-width: 48em) {
-  .is-home > main { order: 2; margin-block-start: var(--space-xl); }
-  .is-home > .site-nav { order: 3; margin-block-start: var(--space-2xl); }
+  /* The whole home page — name, pictures, nav and icons — fits one desktop
+     screen with no scrolling. These are its vertical gaps; .strip below
+     subtracts exactly these from the viewport to size the pictures, so any
+     change here has to be mirrored in --strip-reserve. On a shorter screen
+     the gap above the nav gives way first. */
+  .is-home {
+    --home-strip-gap: var(--space-l);
+    --home-nav-gap: min(var(--space-2xl), 6vh);
+    --home-footer-gap: var(--space-s);
+    --home-bottom: var(--space-m);
+  }
+  /* The comps' 82rem content width holds up to 1440px. On a bigger monitor
+     the pictures grow with the screen (83vw) instead of leaving a band of
+     empty cream under the icons; the height cap on .strip still keeps the
+     whole page inside one screen. */
+  .is-home > main {
+    order: 2;
+    width: min(100% - (2 * var(--space-m)), max(var(--content), 83vw));
+    margin-block-start: var(--home-strip-gap);
+  }
+  .is-home > .site-nav { order: 3; margin-block-start: var(--home-nav-gap); }
+  .is-home .site-footer {
+    margin-block-start: 0;
+    padding-block: var(--home-footer-gap) var(--home-bottom);
+  }
 }
 
 /* ---------- Picture strip (home) ---------- */
@@ -391,6 +430,29 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
     -ms-overflow-style: none;
     overscroll-behavior-x: contain;
   }
+  /* Everything on the home screen except the pictures, top to bottom: header
+     padding, the one-line name, the gap above the strip, the gap above the
+     nav, the nav row, the gap above the icons, the icons, the bottom margin,
+     and half a rem of slack for rounding. */
+  .strip {
+    --strip-reserve: calc(
+      var(--space-m) + var(--step-4-one-line) * 1.05 +
+      var(--home-strip-gap) +
+      var(--home-nav-gap) + var(--step-1) * 1.6 + var(--space-2xs) * 2 +
+      var(--home-footer-gap) + 1.5rem + var(--home-bottom) +
+      0.5rem
+    );
+    /* On a short screen the full-width strip would push the nav and icons
+       below the fold, and the nav is the only way off the home page.
+       Rather than crop the headshots harder, the strip narrows: each portrait
+       keeps its 62:100 frame and the row is centred. On a screen as tall as
+       the comps this cap is wider than the content and does nothing. */
+    max-width: calc(
+      max(22rem, 100vh - var(--strip-reserve)) * 0.62 * 4 + 3 * var(--space-2xs)
+    );
+    margin-inline: auto;
+  }
+
   .strip-track::-webkit-scrollbar { display: none; }
   .strip-track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
@@ -497,29 +559,40 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 
 .is-grayscale img { filter: grayscale(1); }
 
-/* ---------- Contact ---------- */
-/* A white card carrying the agency's mark, then the representation lines.
-   The card is a placeholder: no Posche logo asset exists in the repo and the
-   Figma cannot be exported from without editor access, so the agency name is
-   set in the site's own type until the real mark arrives. */
-.agency {
+/* ---------- About: bio, then the details row ---------- */
+/* The bio is the page. Resume and Contact sit under it as small print — one
+   hairline, then two short columns labelled in the nav's own uppercase — so
+   they read as details of the bio rather than as pages stacked below it. */
+.about-bio {
+  max-width: 40rem;
+  margin-block-start: var(--space-2xl);
+  line-height: 1.75;
+}
+
+.about-details {
   display: grid;
-  justify-items: center;
-  gap: var(--space-m);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-l);
+  max-width: 40rem;
+  margin: var(--space-2xl) auto 0;
+  padding-block-start: var(--space-xl);
+  border-block-start: 1px solid var(--line);
   text-align: center;
 }
 
-.agency-card {
-  display: grid;
-  place-content: center;
-  width: min(100%, 11rem);
-  aspect-ratio: 5 / 3;
-  padding: var(--space-s);
-  background: var(--panel);
-  font-size: var(--step--2);
-  letter-spacing: 0.18em;
+.detail-label {
+  margin-block-end: var(--space-xs);
+  font-size: var(--step--1);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  /* Tracking trails the last letter; pull it back so the label centres. */
+  margin-inline-start: 0.22em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 47.999em) {
+  .about-details { grid-template-columns: 1fr; gap: var(--space-xl); }
 }
 
 /* ---------- Lightbox ---------- */
@@ -545,20 +618,26 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   aspect-ratio: 16 / 9;
 }
 .facade img { width: 100%; height: 100%; object-fit: cover; }
+/* The reel thumbnails are a portrait on the left and the name set large on the
+   right, with the seam in a different place on each — so a centred button
+   lands on the face or the lettering. The bottom-right corner of the white
+   card is empty in both, and dark on white is the strongest contrast there is. */
 .facade::after {
   content: "▶";
   position: absolute;
-  inset: 50% auto auto 50%;
-  translate: -50% -50%;
+  inset: auto 4% 6% auto;
   display: grid;
   place-content: center;
-  width: 4.5rem;
+  width: clamp(2.5rem, 6vw, 4.5rem);
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--overlay);
   color: var(--ink-invert);
-  font-size: var(--step-1);
+  font-size: clamp(0.8rem, 1.4vw, 1.25rem);
+  transition: scale 180ms ease, background-color 180ms ease;
 }
+.facade:hover::after,
+.facade:focus-visible::after { scale: 1.08; background: var(--ink); }
 .embed { aspect-ratio: 16 / 9; }
 .embed iframe { width: 100%; height: 100%; border: 0; }
 

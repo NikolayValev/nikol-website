@@ -14,3 +14,6 @@ tools/node_modules/
 
 # Generated designer preview (large, self-contained, not deployed)
 preview/
+
+# Upload package built from tools/deploy-manifest.txt (not tracked)
+dist/

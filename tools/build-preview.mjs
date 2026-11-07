@@ -21,9 +21,7 @@ const PAGES = [
   ['about.html', 'About'],
   ['headshots.html', 'Headshots'],
   ['reel.html', 'Reel'],
-  ['resume.html', 'Resume'],
   ['gallery.html', 'Gallery'],
-  ['contact.html', 'Contact'],
   ['404.html', '404'],
 ];
 
@@ -65,6 +63,9 @@ const css = (await readFile(join(ROOT, 'assets', 'css', 'site.css'), 'utf8')).re
   `url("data:font/woff2;base64,${fontB64}")`,
 );
 const js = await readFile(join(ROOT, 'assets', 'js', 'site.js'), 'utf8');
+// The IMDb mark is a hand-made PNG outside the image manifest (it needs its
+// transparency), so the width-suffixed rewrite in buildPage never matches it.
+const imdbUri = `data:image/png;base64,${(await readFile(join(ROOT, 'assets', 'img', 'imdb.png'))).toString('base64')}`;
 
 // Injected into every previewed page. Keeps the real nav feeling real while
 // routing through the parent, since a one-file preview has no server.
@@ -127,6 +128,8 @@ async function buildPage(file) {
     html = html.split(`"${url}"`).join(`"${uri}"`);
   }
 
+  html = html.split('"/assets/img/imdb.png"').join(`"${imdbUri}"`);
+
   html = html.replace('</body>', `<script>${BRIDGE}</script>\n</body>`);
   return html;
 }
@@ -150,6 +153,7 @@ const shell = `<title>Nikol Tsvetanova Preview</title>
      way a design tool's canvas is — not a document that should follow the
      reader's theme. Every colour is painted explicitly so it holds on any host. */
   :root {
+    color-scheme: dark;
     --chrome-bg: #141416;
     --chrome-panel: #1C1C1F;
     --chrome-line: rgba(255, 255, 255, 0.10);
@@ -323,7 +327,8 @@ const shell = `<title>Nikol Tsvetanova Preview</title>
     const d = event.data;
     if (!d || !d.preview) return;
     if (d.preview === 'navigate') {
-      const file = d.href === '/' ? 'index.html' : d.href.replace(/^\\//, '') + '.html';
+      const path = d.href.split('#')[0];   // "/about#contact" is still about.html
+      const file = path === '/' ? 'index.html' : path.replace(/^\\//, '') + '.html';
       if (pages[file]) show(file);
       else say('That page is not part of this preview.');
     }

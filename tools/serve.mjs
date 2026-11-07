@@ -43,8 +43,22 @@ async function resolveFile(pathname) {
   return null;
 }
 
+// The 301s in .htaccess that local behaviour depends on.
+const REDIRECTS = {
+  '/resume': '/about#resume',
+  '/resume.html': '/about#resume',
+  '/contact': '/about#contact',
+  '/contact.html': '/about#contact',
+};
+
 createServer(async (req, res) => {
   const { pathname } = new URL(req.url, `http://localhost:${PORT}`);
+
+  if (REDIRECTS[pathname]) {
+    res.writeHead(301, { location: REDIRECTS[pathname] });
+    res.end();
+    return;
+  }
   const file = await resolveFile(pathname === '/' ? '/index.html' : pathname);
 
   if (file === null) {

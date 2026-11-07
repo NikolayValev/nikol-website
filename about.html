@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nikol Tsvetanova — About</title>
-<meta name="description" content="About Nikol Tsvetanova, a Bulgarian-born actor based in New York City.">
+<meta name="description" content="About Nikol Tsvetanova, a Bulgarian-born actor based in New York City. Résumé and representation.">
 <link rel="canonical" href="https://nikoltsvetanova.com/about">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nikol Tsvetanova">
 <meta property="og:title" content="Nikol Tsvetanova — About">
-<meta property="og:description" content="About Nikol Tsvetanova, a Bulgarian-born actor based in New York City.">
+<meta property="og:description" content="About Nikol Tsvetanova, a Bulgarian-born actor based in New York City. Résumé and representation.">
 <meta property="og:url" content="https://nikoltsvetanova.com/about">
 <meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-2400.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -41,9 +41,7 @@
     <li><a href="/about" aria-current="page">About</a></li>
     <li><a href="/headshots">Headshots</a></li>
     <li><a href="/reel">Reel</a></li>
-    <li><a href="/resume">Resume</a></li>
     <li><a href="/gallery">Gallery</a></li>
-    <li><a href="/contact">Contact</a></li>
   </ul>
   <button class="nav-close" type="button">
     <span aria-hidden="true">&times;</span><span class="visually-hidden">Close menu</span>
@@ -55,8 +53,32 @@
        carries that job. The heading stays for document structure. -->
   <h1 class="visually-hidden">About</h1>
 
-  <div class="prose" style="margin-block-start: var(--space-3xl)">
+  <div class="prose about-bio">
     <p>Nikol Tsvetanova is a Bulgarian-born actress based in NYC. Her love of performance is inspired by her fascination with and curiosity about human behavior and psychology, and she embraces the nuances, humor, and absurdity of the human experience in her work. She writes her own material and is currently working on a play focusing on two people exploring an open relationship as a way of growing closer. In her spare time, she is a part of the oldest traditional Bulgarian folk dance group in North America (aide, Bosilek!) and delights in hot yoga, cooking, and knitting. She strives to make art that is universal yet specific, dynamic and alive, and resonates with a variety of audiences.</p>
+  </div>
+
+  <!-- Resume and Contact used to be pages of their own. They sit under the bio
+       as one quiet row of details; /resume and /contact 301 to these anchors
+       (.htaccess, tools/serve.mjs). The Contact comp also draws the agency's
+       logo in a white card. No Posche artwork exists in _source/, and a card
+       with the name typed in read as an empty box, so it is left out until the
+       real mark arrives. -->
+  <div class="about-details">
+    <section id="resume" aria-labelledby="resume-title">
+      <h2 id="resume-title" class="detail-label">Resume</h2>
+      <p>
+        <a href="/assets/docs/nikol-tsvetanova-resume.pdf" target="_blank" rel="noopener">Download résumé <span aria-hidden="true">↗</span><span class="visually-hidden">(PDF, opens in a new tab)</span></a>
+      </p>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title" class="detail-label">Contact</h2>
+      <p>
+        Represented by Posche Talent<br>
+        Florance Kirilova<br>
+        <a href="mailto:florance@poschemodels.com">florance@poschemodels.com</a>
+      </p>
+    </section>
   </div>
 </main>
 

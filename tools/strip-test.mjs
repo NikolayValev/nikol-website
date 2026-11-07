@@ -3,7 +3,7 @@
 //   - four pictures across on desktop, a 2x2 block on mobile
 //   - the desktop row rotates leftward, pauses on hover, and never snaps back
 //   - the mobile block does not rotate and is not a sideways scroller
-//   - six nav items on every page, with the current one marked
+//   - four nav items on every page, with the current one marked
 // Needs the local server: node tools/serve.mjs
 import puppeteer from 'puppeteer';
 
@@ -146,7 +146,7 @@ say('mobile does not clone or rotate', block.total === 4 && block.clones === 0,
     `${block.total} slides, ${block.clones} clones`);
 say('mobile is not a sideways scroller', !block.overflows);
 
-// The "+" opens the sheet; the sheet carries all six links and closes again.
+// The "+" opens the sheet; the sheet carries all four links and closes again.
 const sheet = await p.evaluate(() => !!document.querySelector('.nav-toggle')
   && getComputedStyle(document.querySelector('.nav-toggle')).display !== 'none');
 say('mobile shows the + toggle', sheet);
@@ -162,8 +162,8 @@ const opened = await p.evaluate(() => {
     closeShown: getComputedStyle(document.querySelector('.nav-close')).display !== 'none',
   };
 });
-say('+ opens a sheet with all six links', opened.open && opened.visible
-    && opened.links === 6 && opened.expanded === 'true' && opened.closeShown,
+say('+ opens a sheet with all four links', opened.open && opened.visible
+    && opened.links === 4 && opened.expanded === 'true' && opened.closeShown,
     JSON.stringify(opened));
 await p.click('.nav-close');
 await wait(250);
@@ -192,7 +192,7 @@ const noJs = await p.$$eval('.strip-slide img', (els) => els.map((e) => getCompu
 say('no JS: images visible', noJs.every((o) => Number(o) === 1),
     `${noJs.length} images, opacity ${[...new Set(noJs)].join('/')}`);
 const noJsNav = await p.$$eval('.nav-list a', (els) => els.length);
-say('no JS: nav links still reachable', noJsNav === 6, `${noJsNav} links`);
+say('no JS: nav links still reachable', noJsNav === 4, `${noJsNav} links`);
 await p.close();
 
 // --- about: centred prose, no portrait (the comp drops it) ---
@@ -211,33 +211,27 @@ say('about marked current in nav', about.current === 'About', `current: ${about.
 say('about still shows credits', about.credits === 1);
 await p.close();
 
-// --- contact: agency block, and the resume link has moved to /resume ---
+// --- resume and contact live on About; their old URLs land there ---
 p = await b.newPage();
 await p.setViewport({ width: 1280, height: 900 });
-await p.goto(base + '/contact', { waitUntil: 'networkidle0' });
-const c = await p.evaluate(() => ({
+await p.goto(base + '/about', { waitUntil: 'networkidle0' });
+const merged = await p.evaluate(() => ({
   h1: document.querySelectorAll('h1').length,
-  card: !!document.querySelector('.agency-card'),
-  email: !!document.querySelector('a[href^="mailto:"]'),
-  resume: !!document.querySelector('main a[href$="resume.pdf"]'),
-  current: document.querySelector('[aria-current="page"]')?.textContent.trim(),
+  pdf: !!document.querySelector('#resume a[href$="resume.pdf"]'),
+  agency: document.querySelector('#contact')?.textContent.includes('Posche Talent'),
+  email: !!document.querySelector('#contact a[href^="mailto:"]'),
+  order: [...document.querySelectorAll('main > .prose, main section')].map((e) => e.id || 'bio').join(','),
 }));
-say('contact page exists with one h1', c.h1 === 1);
-say('contact has the agency card', c.card);
-say('contact has the agent email', c.email);
-say('resume download no longer on contact', !c.resume);
-say('contact marked current in nav', c.current === 'Contact', `current: ${c.current}`);
-await p.close();
-
-// --- resume page carries the PDF ---
-p = await b.newPage();
-await p.goto(base + '/resume', { waitUntil: 'networkidle0' });
-const r = await p.evaluate(() => ({
-  pdf: !!document.querySelector('main a[href$="resume.pdf"]'),
-  current: document.querySelector('[aria-current="page"]')?.textContent.trim(),
-}));
-say('resume page has the PDF', r.pdf);
-say('resume marked current in nav', r.current === 'Resume', `current: ${r.current}`);
+say('about has one h1', merged.h1 === 1);
+say('about carries the resume PDF', merged.pdf);
+say('about carries the agency and agent email', merged.agency && merged.email);
+say('about reads bio, resume, contact', merged.order === 'bio,resume,contact', merged.order);
+for (const [from, hash] of [['/resume', '#resume'], ['/contact', '#contact'], ['/contact.html', '#contact']]) {
+  const res = await p.goto(base + from, { waitUntil: 'networkidle0' });
+  const landed = new URL(p.url());
+  const chain = res.request().redirectChain().map((r) => r.response()?.status());
+  say(`${from} 301s to /about${hash}`, landed.pathname === '/about' && landed.hash === hash && chain[0] === 301, `${chain.join('>')} -> ${landed.pathname}${landed.hash}`);
+}
 await p.close();
 
 // --- the placeholder page is reachable and not indexable ---
@@ -253,14 +247,56 @@ await p.close();
 
 // --- the Figma nav, on every page ---
 p = await b.newPage();
-const LABELS = ['About', 'Headshots', 'Reel', 'Resume', 'Gallery', 'Contact'];
+const LABELS = ['About', 'Headshots', 'Reel', 'Gallery'];
 let navWrong = [];
-for (const u of ['/', '/about', '/headshots', '/reel', '/resume', '/gallery', '/contact', '/404.html']) {
+for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
   await p.goto(base + u, { waitUntil: 'domcontentloaded' });
   const labels = await p.$$eval('.nav-list a', (els) => els.map((a) => a.textContent.trim()));
   if (labels.join('|') !== LABELS.join('|')) navWrong.push(`${u}: ${labels.join(',')}`);
 }
-say('all six Figma nav items on every page', navWrong.length === 0, navWrong.join(' ; '));
+say('the four nav items on every page', navWrong.length === 0, navWrong.join(' ; '));
+await p.close();
+
+// --- home fits one desktop screen, no scrolling ---
+// Name, pictures, nav and icons all in view. The nav is the only way off the
+// home page, and at full width the strip once pushed it below the fold.
+p = await b.newPage();
+const scrolls = [];
+for (const [w, h] of [[1920, 1080], [1536, 864], [1440, 900], [1440, 1024], [1366, 768], [1280, 800], [1280, 720], [1024, 768]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(() => ({
+    doc: document.documentElement.scrollHeight,
+    icons: document.querySelector('.socials').getBoundingClientRect().bottom,
+  }));
+  if (m.doc > h || m.icons > h) scrolls.push(`${w}x${h}: page ${m.doc}px, icons end ${Math.round(m.icons)}`);
+}
+say('home fits desktop screens without scrolling', scrolls.length === 0, scrolls.join(' ; '));
+
+// --- the name is one line on desktop, two on a phone ---
+const lines = [];
+for (const [w, want] of [[1920, 1], [1440, 1], [1024, 1], [768, 1], [375, 2]]) {
+  await p.setViewport({ width: w, height: 900 });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const n = await p.$eval('.display', (h) =>
+    Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)));
+  if (n !== want) lines.push(`${w}px: ${n} lines, want ${want}`);
+}
+say('name is one line on desktop, two on a phone', lines.length === 0, lines.join(' ; '));
+await p.setViewport({ width: 1440, height: 1024 });
+await p.goto(base + '/', { waitUntil: 'domcontentloaded' });
+const compStrip = await p.$eval('.strip', (s) => Math.round(s.getBoundingClientRect().width));
+say('strip is full width at the comps\' 1440x1024', compStrip === 1312, `${compStrip}px`);
+
+// --- the nav row never strands an item on a line of its own ---
+const wrapped = [];
+for (const w of [768, 820, 1024, 1440]) {
+  await p.setViewport({ width: w, height: 1024 });
+  await p.goto(base + '/about', { waitUntil: 'domcontentloaded' });
+  const rows = await p.$$eval('.nav-list li', (els) => new Set(els.map((e) => e.offsetTop)).size);
+  if (rows !== 1) wrapped.push(`${w}px: ${rows} rows`);
+}
+say('desktop nav is one row from 768px up', wrapped.length === 0, wrapped.join(' ; '));
 await p.close();
 
 await b.close();
