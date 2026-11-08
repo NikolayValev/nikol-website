@@ -234,7 +234,7 @@ const shell = `<title>Nikol Tsvetanova Preview</title>
     height: 100%;
     /* The site's paper colour, so the frame does not flash the old grey
        before srcdoc paints. Keep in step with --paper in site.css. */
-    background: #F2E9E4;
+    background: #F0EAE2;
     border: 0;
     border-radius: 2px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.3);

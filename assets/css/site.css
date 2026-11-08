@@ -3,22 +3,22 @@
    ("Nikol Tsvetanova Website"). The cream and the pure black were sampled off
    the comps; the previous palette was a cooler grey. */
 :root {
-  --paper: #F2E9E4;
+  --paper: #F0EAE2;
   --panel: #FFFFFF;
   --ink: #000000;
   /* DEVIATION from the comps, deliberately. The grey Mila uses for the
      inactive nav items and the small print samples as #8B8680, which is
      3.02:1 against this cream — under WCAG AA's 4.5:1 for text this size, and
      these are the site's primary navigation links, not decoration. #6B6762 is
-     the lightest warm grey on the same hue that clears AA (4.69:1), so it
+     the lightest warm grey on the same hue that clears AA (4.7:1), so it
      keeps the intent — clearly recessive against the black current-page item —
      without shipping a nav that fails an audit. Worth confirming with her. */
   --ink-muted: #6B6762;
   --line: rgba(0, 0, 0, 0.22);
-  --ink-invert: #F2E9E4;
+  --ink-invert: #F0EAE2;
   --overlay: rgba(0, 0, 0, 0.78);
   /* The wash the gallery lays over a photo so its caption can be read. */
-  --wash: rgba(242, 233, 228, 0.72);
+  --wash: rgba(240, 234, 226, 0.72);
 
   /* Zalando Sans, a variable face (weights 200-900), self-hosted below. One
      family for everything: the name, the nav, the prose. The fallbacks only

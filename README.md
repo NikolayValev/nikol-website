@@ -100,7 +100,7 @@ Website". Two things about it are worth knowing before you touch the CSS:
   the row of four.
 - **The inactive nav grey is deliberately darker than the comps.** Mila's grey
   samples as `#8B8680`, which is 3.02:1 against the cream — below WCAG AA, on
-  the primary navigation. The token is `#6B6762` (4.69:1) instead. The reason
+  the primary navigation. The token is `#6B6762` (4.7:1) instead. The reason
   is written next to it.
 
 `docs/` and `.superpowers/` record the pre-Figma rebuild, not this design.
