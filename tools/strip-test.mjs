@@ -135,13 +135,16 @@ await p.goto(base + '/', { waitUntil: 'networkidle0' });
 await wait(600);
 const block = await p.$eval('.strip-track', (t) => ({
   display: getComputedStyle(t).display,
-  columns: getComputedStyle(t).gridTemplateColumns.split(' ').length,
+  // Slides per row: how many share each distinct top edge.
+  perRow: Object.values([...t.querySelectorAll('.strip-slide')].reduce((a, e) => {
+    const k = Math.round(e.getBoundingClientRect().top); a[k] = (a[k] || 0) + 1; return a;
+  }, {})),
   total: t.querySelectorAll('.strip-slide').length,
   clones: t.querySelectorAll('.strip-slide[aria-hidden="true"]').length,
   overflows: t.scrollWidth > t.clientWidth + 2,
 }));
-say('mobile is a two-column grid', block.display === 'grid' && block.columns === 2,
-    `${block.display}, ${block.columns} columns`);
+say('mobile is a 2x2 block, two pictures to a row', block.perRow.join(',') === '2,2',
+    `rows of ${block.perRow.join(',')}`);
 say('mobile does not clone or rotate', block.total === 4 && block.clones === 0,
     `${block.total} slides, ${block.clones} clones`);
 say('mobile is not a sideways scroller', !block.overflows);
@@ -358,19 +361,42 @@ for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820,
 }
 say('name lines up with the pictures; equal gaps above and below it', flush.length === 0, flush.join(' ; '));
 
+// --- nothing is cropped, and the space under the icons is small ---
+// Every picture is shown at its own proportions (displayed width:height equals
+// the file's), and the page does not leave a band of empty cream below the icon
+// row: the icons end within 40px of the bottom of the screen.
+const crop = [], gapBottom = [];
+for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [390, 844], [375, 667]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(() => ({
+    off: Math.max(...[...document.querySelectorAll('.strip-slide:not([aria-hidden="true"]) img')].map((i) => {
+      const r = i.getBoundingClientRect();
+      return Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) / (i.naturalWidth / i.naturalHeight);
+    })),
+    below: innerHeight - document.querySelector('.socials').getBoundingClientRect().bottom,
+  }));
+  if (m.off > 0.01) crop.push(`${w}x${h}: ${(m.off * 100).toFixed(1)}% off`);
+  if (m.below > 40) gapBottom.push(`${w}x${h}: ${Math.round(m.below)}px below the icons`);
+}
+say('pictures are shown uncropped, at their own proportions', crop.length === 0, crop.join(' ; '));
+say('little space below the icon row', gapBottom.length === 0, gapBottom.join(' ; '));
+
 // --- tablets: a 2x2 block that fits the screen ---
 const tab = [];
 for (const [w, h] of [[768, 1024], [820, 1180], [834, 1194]]) {
   await p.setViewport({ width: w, height: h });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
   const m = await p.evaluate(() => ({
-    cols: getComputedStyle(document.querySelector('.strip-track')).gridTemplateColumns.split(' ').length,
+    rows: Object.values([...document.querySelectorAll('.strip-slide')].reduce((a, e) => {
+      const k = Math.round(e.getBoundingClientRect().top); a[k] = (a[k] || 0) + 1; return a;
+    }, {})).join(','),
     slides: document.querySelectorAll('.strip-slide').length,
     toggle: getComputedStyle(document.querySelector('.nav-toggle')).display,
     doc: document.documentElement.scrollHeight,
   }));
-  if (m.cols !== 2 || m.slides !== 4 || m.toggle === 'none' || m.doc > h) {
-    tab.push(`${w}x${h}: ${m.cols} cols, ${m.slides} slides, toggle ${m.toggle}, page ${m.doc}px`);
+  if (m.rows !== '2,2' || m.slides !== 4 || m.toggle === 'none' || m.doc > h) {
+    tab.push(`${w}x${h}: rows of ${m.rows}, ${m.slides} slides, toggle ${m.toggle}, page ${m.doc}px`);
   }
 }
 say('tablet home is the 2x2 block with "+", and fits the screen', tab.length === 0, tab.join(' ; '));

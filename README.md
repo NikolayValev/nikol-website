@@ -94,6 +94,12 @@ Website". Two things about it are worth knowing before you touch the CSS:
   edges. **If you change the font, re-measure that number** (it is in the
   "Home" section of `assets/css/site.css`) or the name will no longer line up;
   `node tools/strip-test.mjs` fails with "name is as wide as the pictures".
+- **The four home pictures are never cropped.** Each `<li class="strip-slide">`
+  in `index.html` carries its photo's width:height in `--ar`, and the layout is
+  solved from those four ratios (`--home-sum`, `--home-k2`, `--home-c1` in the
+  "Home" section of `assets/css/site.css`, and `2.618544` in the strip rules).
+  **If you swap a home photo, update its `--ar` and those constants**; the test
+  "pictures are shown uncropped" catches a mismatch.
 - **The home page is exactly one screen tall and cannot scroll**, on every
   device (`overflow: hidden`). The picture block is sized from the screen
   height so the name, pictures, nav and icons always fit; if you add anything

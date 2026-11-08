@@ -348,27 +348,36 @@ html:has(.is-home) { overflow: hidden; }
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  /* Width : height of one picture. Phones and tablets stack them 2x2. */
-  --tile-ar: 0.8;
   --tile-gap: var(--space-2xs);
+  /* The four pictures' width:height ratios (the --ar on each slide in
+     index.html): 3209/4971, 3308/5232, 2896/4765, 3648/4977. */
+  --home-sum: 2.618544;
+  /* Phones and tablets stack them 2x2, two to a row, and a row of two is as
+     tall as its width over the two ratios added: 1/1.277807 + 1/1.340737 =
+     1.528427 widths of height for the two rows. */
+  --home-k2: 1.528427;
+  /* How much of the row the name is short of the pictures, desktop: the name
+     runs from the middle of the first picture to the middle of the last, so it
+     is short of the row by half of each: (ar1 + ar4) / (2 x sum). */
+  --home-c1: 0.26323;
   /* Height of the two-line name per unit of its width: 2 lines x line-height
      1.05, over 7.7733em, the measured ink width of "TSVETANOVA" in Zalando
      Sans at weight 300 with 0.16em tracking. */
   --home-name: calc(2 * 1.05 / 7.7733);
-  /* Phones and tablets. A 2x2 block is (width - gap) / ar + gap tall; add the
+  /* Phones and tablets. A 2x2 block is (width - gap) x k2 + gap tall; add the
      name's height (width * name) and the rows around them (--home-other), set
      that equal to the screen, and solve for the width. Capped at 40rem so a
      tablet does not stretch it, and floored at 10rem so a squat window
      shrinks the block rather than clipping the nav. */
   --home-other: calc(
     var(--space-xl) + var(--space-l) + var(--step-3) + var(--space-2xs) * 2 +
-    var(--space-m) + 1.5rem + var(--space-l) + 1.75rem
+    var(--space-m) + 1.5rem + var(--space-s) + 1.75rem
   );
   --home-fit: calc(
-    (100svh - var(--home-other) + var(--tile-gap) / var(--tile-ar) - var(--tile-gap)) /
-    (var(--home-name) + 1 / var(--tile-ar))
+    (100svh - var(--home-other) + var(--tile-gap) * var(--home-k2) - var(--tile-gap)) /
+    (var(--home-name) + var(--home-k2))
   );
-  --home-w: min(100% - (2 * var(--space-m)), 40rem, max(var(--home-fit), 10rem));
+  --home-w: min(100% - (2 * var(--space-s)), 40rem, max(var(--home-fit), 10rem));
 }
 .is-home > .site-header { order: 1; }
 .is-home > .site-nav { order: 2; }
@@ -392,7 +401,7 @@ html:has(.is-home) { overflow: hidden; }
 /* The home frames carry only the icon row — no rule, no copyright. */
 .is-home .site-footer {
   margin-block-start: var(--space-m);
-  padding-block-end: var(--space-l);
+  padding-block-end: var(--space-s);
   border-block-start: 0;
 }
 .is-home .footer-note,
@@ -402,32 +411,34 @@ html:has(.is-home) { overflow: hidden; }
 @media (min-width: 64em) {
   /* Desktop: four pictures in a row, the nav underneath. The name runs from the
      centre of the first picture to the centre of the last, so it is narrower
-     than the row by one picture: (row - tile) = 0.75 x row + 0.75 x gap. Three
+     than the row by half of each of those two pictures. Three
      equal gaps frame it: above the name, below it, and (so the same) between it
      and the pictures. --home-gap is the visible gap, cap-top to the top of the
      screen and baseline to the pictures; the margins below take off the font's
      own space above the capitals (0.16em) and below the baseline (0.17em). */
   .is-home {
-    --tile-ar: 0.8;
     --home-gap: var(--space-xl);
     --home-side: var(--space-s);
     --home-nav-gap: min(var(--space-2xl), 5vh);
     --home-footer-gap: var(--space-s);
-    --home-bottom: var(--space-m);
+    --home-bottom: var(--space-s);
+    /* The name's line box less the 0.33em the margins below take back from it
+       (0.16em above the capitals, 0.17em under the baseline). */
+    --home-name: calc((2 * 1.05 - 0.33) / 7.7733);
     --home-other: calc(
       2 * var(--home-gap) +
       var(--home-nav-gap) + var(--step-1) * 1.6 + var(--space-2xs) * 2 +
       var(--home-footer-gap) + 1.5rem + var(--home-bottom) +
-      0.75rem
+      0.25rem
     );
-    /* Name height = home-name x (0.75 x row + 0.75 x gap). Row height =
-       (row - 3 gaps) / (4 x ar). Set the total equal to the screen and solve
-       for the row width. This is what keeps the page one screen tall; the
-       sides are whatever it leaves, down to --home-side. */
+    /* The name's ink is the row less c1 of (row - 3 gaps); its height is
+       home-name x that. The pictures' common height is (row - 3 gaps) / sum.
+       Set the total equal to the screen and solve for the row width. This is
+       what keeps the page one screen tall; the sides are whatever it leaves,
+       down to --home-side. */
     --home-fit: calc(
-      (100vh - var(--home-other) - 0.75 * var(--home-name) * var(--tile-gap) +
-        3 * var(--tile-gap) / (4 * var(--tile-ar))) /
-      (0.75 * var(--home-name) + 1 / (4 * var(--tile-ar)))
+      (100vh - var(--home-other) + 3 * var(--tile-gap) * (var(--home-c1) * var(--home-name) + 1 / var(--home-sum))) /
+      ((1 - var(--home-c1)) * var(--home-name) + 1 / var(--home-sum))
     );
     --home-w: min(
       100% - (2 * var(--home-side)),
@@ -436,7 +447,11 @@ html:has(.is-home) { overflow: hidden; }
   }
   .is-home > .site-header { padding-block-start: 0; }
   .is-home .display {
-    font-size: calc((75cqw + 0.75 * var(--tile-gap)) / 7.7733);
+    font-size: calc(((1 - var(--home-c1)) * 100cqw + 3 * var(--home-c1) * var(--tile-gap)) / 7.7733);
+    /* Centred between the middle of the first picture and the middle of the
+       last. Those are not symmetric about the row's centre (the last picture is
+       wider than the first), so nudge by (w1 - w4) / 4. */
+    translate: calc((100cqw - 3 * var(--tile-gap)) * -0.008348) 0;
     margin-block: calc(var(--home-gap) - 0.16em) calc(var(--home-gap) - 0.17em);
   }
   .is-home > main { order: 2; }
@@ -448,36 +463,38 @@ html:has(.is-home) { overflow: hidden; }
 }
 
 /* ---------- Picture strip (home) ---------- */
-/* Four portraits, equal height, thin gaps — a single row on desktop, a 2x2
-   block on phones and tablets. From 64em the row also rotates (see site.js);
-   the 2x2 block does not, because a rotating grid reads as a shuffle, not a
-   strip. */
+/* Four portraits at their own proportions, nothing cropped: each <li> carries
+   its photo's width:height in --ar (see index.html), and the four are laid out
+   to one common height, so they are slightly different widths. A single row on
+   desktop, a 2x2 block on phones and tablets (two to a row, each row sharing a
+   height). From 64em the row also rotates (see site.js); the 2x2 block does not,
+   because a rotating grid reads as a shuffle, not a strip. */
 .strip { position: relative; }
 
 .strip-track {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-2xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tile-gap);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.strip-slide { aspect-ratio: var(--tile-ar); }
+/* Each slide grows in proportion to its ratio, from a basis in the same
+   proportion, so a row's pictures come out exactly as wide as their ratios say
+   (and so share one height). 66% is chosen so any two fit a row and any three
+   do not: that is what makes the wrap fall after the second picture. */
+.strip-slide {
+  flex: var(--ar) 1 calc(var(--ar) * 66%);
+  aspect-ratio: var(--ar);
+}
 
 .strip-slide picture,
 .strip-slide img { width: 100%; height: 100%; }
 
-.strip-slide img {
-  object-fit: cover;
-  /* Biased above centre: these are portraits, and the fixed ratio takes a few
-     percent off. Better off the feet than off the head. */
-  object-position: 50% 35%;
-}
-
 @media (min-width: 64em) {
   .strip-track {
-    display: flex;
+    flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -486,11 +503,12 @@ html:has(.is-home) { overflow: hidden; }
   .strip-track::-webkit-scrollbar { display: none; }
   .strip-track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
-  /* Four across, matching the comps. The clones site.js appends sit beyond the
-     fourth and are scrolled into view one at a time. The gap is inherited from
-     the grid declaration above, so the basis subtracts three of them. */
+  /* Four across. The clones site.js appends sit beyond the fourth and are
+     scrolled into view one at a time, so widths are fixed rather than grown:
+     the row less three gaps, shared out by ratio. 2.618544 is the four ratios
+     added up (--home-sum on .is-home); change a photo and it changes too. */
   .strip-slide {
-    flex: 0 0 calc((100% - (3 * var(--space-2xs))) / 4);
+    flex: 0 0 calc((100% - (3 * var(--tile-gap))) * var(--ar) / 2.618544);
   }
 }
 

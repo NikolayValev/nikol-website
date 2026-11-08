@@ -185,14 +185,21 @@ function initStrip() {
     clones = [];
   }
 
-  // Measured rather than computed: with four slides laid out by flex-basis and
-  // a fluid gap, the distance from one slide to the next is the only number
-  // that is reliably right.
-  const step = () =>
-    originals.length > 1
-      ? originals[1].offsetLeft - originals[0].offsetLeft
-      : originals[0].getBoundingClientRect().width;
-  const loopWidth = () => step() * originals.length;
+  // Measured rather than computed. The pictures keep their own proportions, so
+  // they are different widths and no single step fits them all: each slide's
+  // position is read from the layout, relative to the first.
+  const gap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
+  const positions = () => {
+    const base = originals[0].offsetLeft;
+    return [...track.children].map((slide) => slide.offsetLeft - base);
+  };
+  // One full turn: the distance from the first picture to its own clone, or, with
+  // no clones yet, to where the clone would start.
+  const loopWidth = () => {
+    if (clones.length > 0) return clones[0].offsetLeft - originals[0].offsetLeft;
+    const last = originals[originals.length - 1];
+    return last.offsetLeft + last.getBoundingClientRect().width + gap() - originals[0].offsetLeft;
+  };
 
   // The position is kept inside [0, loopWidth). Beyond that the track simply
   // runs out of scrollable width.
@@ -209,16 +216,16 @@ function initStrip() {
   // Moves the strip leftward: scrollLeft increases, so each new image enters
   // from the right edge.
   function advance() {
-    const distance = step();
     const loop = loopWidth();
-    if (distance <= 0) return;
+    if (loop <= 0) return;
     // Rewind by exactly one loop before it would run past the end. The second
     // copy is identical to the first, so the jump cannot be seen.
-    if (track.scrollLeft + distance >= loop - 0.5) {
-      track.scrollLeft -= loop;
-    }
+    if (track.scrollLeft >= loop - 0.5) track.scrollLeft -= loop;
+    // The next picture whose left edge is still ahead of the strip.
+    const next = positions().find((x) => x > track.scrollLeft + 1);
+    if (next === undefined) return;
     track.scrollTo({
-      left: track.scrollLeft + distance,
+      left: next,
       behavior: calm.matches ? 'auto' : 'smooth',
     });
   }
