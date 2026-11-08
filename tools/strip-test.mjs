@@ -257,40 +257,59 @@ for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html'])
 say('the four nav items on every page', navWrong.length === 0, navWrong.join(' ; '));
 await p.close();
 
-// --- home fits one desktop screen, no scrolling ---
-// Name, pictures, nav and icons all in view. The nav is the only way off the
-// home page, and at full width the strip once pushed it below the fold.
+// --- home is exactly one screen and does not scroll, on every device ---
+// Name, pictures, nav (or the "+") and icons all in view; nothing taller than
+// the screen, and nothing the user could scroll to. The nav is the only way off
+// the home page, so it must never be clipped.
 p = await b.newPage();
 const scrolls = [];
-for (const [w, h] of [[1920, 1080], [1536, 864], [1440, 900], [1440, 1024], [1366, 768], [1280, 800], [1280, 720], [1024, 768]]) {
+const SCREENS = [
+  [1920, 1080], [1536, 864], [1440, 900], [1440, 1024], [1366, 768], [1280, 800], [1280, 720], [1024, 768],
+  [1024, 1366], [834, 1194], [820, 1180], [768, 1024],
+  [430, 932], [414, 896], [390, 844], [375, 667], [360, 740], [320, 568],
+];
+for (const [w, h] of SCREENS) {
   await p.setViewport({ width: w, height: h });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
-  const m = await p.evaluate(() => ({
-    doc: document.documentElement.scrollHeight,
-    icons: document.querySelector('.socials').getBoundingClientRect().bottom,
-  }));
-  if (m.doc > h || m.icons > h) scrolls.push(`${w}x${h}: page ${m.doc}px, icons end ${Math.round(m.icons)}`);
+  const m = await p.evaluate(() => {
+    const nav = getComputedStyle(document.querySelector('.nav-toggle')).display !== 'none'
+      ? document.querySelector('.nav-toggle') : document.querySelector('.nav-list');
+    return {
+      doc: document.documentElement.scrollHeight,
+      body: document.body.scrollHeight,
+      icons: document.querySelector('.socials').getBoundingClientRect().bottom,
+      nav: nav.getBoundingClientRect().bottom,
+      lock: getComputedStyle(document.body).overflow,
+      sw: document.documentElement.scrollWidth,
+    };
+  });
+  const bad = m.doc > h || m.body > h || m.icons > h || m.nav > h || m.lock !== 'hidden' || m.sw > w;
+  if (bad) scrolls.push(`${w}x${h}: page ${m.doc}/${m.body}px, icons end ${Math.round(m.icons)}, nav end ${Math.round(m.nav)}, overflow ${m.lock}, width ${m.sw}`);
 }
-say('home fits desktop screens without scrolling', scrolls.length === 0, scrolls.join(' ; '));
+say('home is one screen and does not scroll, on every device', scrolls.length === 0, scrolls.join(' ; '));
+// A real scroll attempt moves nothing.
+await p.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+await p.goto(base + '/', { waitUntil: 'networkidle0' });
+const scrolledBy = await p.evaluate(() => { window.scrollTo(0, 500); document.body.scrollTo?.(0, 500); return window.scrollY + document.body.scrollTop; });
+say('home cannot be scrolled', scrolledBy === 0, `scrolled ${scrolledBy}px`);
 
-// --- the name is one line on desktop, two on phones and tablets ---
-// Tablets (under 1024px) take the phone design: two-line name, 2x2 block, "+".
+// --- the name is on two lines everywhere ---
 const lines = [];
-for (const [w, want] of [[1920, 1], [1440, 1], [1024, 1], [820, 2], [768, 2], [375, 2]]) {
+for (const [w, want] of [[1920, 2], [1440, 2], [1024, 2], [820, 2], [768, 2], [375, 2]]) {
   await p.setViewport({ width: w, height: 900 });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
   const n = await p.$eval('.display', (h) =>
     Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)));
   if (n !== want) lines.push(`${w}px: ${n} lines, want ${want}`);
 }
-say('name is one line on desktop, two on phones and tablets', lines.length === 0, lines.join(' ; '));
+say('name is on two lines on every screen', lines.length === 0, lines.join(' ; '));
 
 // --- the name is as wide as the pictures ---
 // The first letter sits on the first picture's left edge and the last letter on
 // the last picture's right edge. The name's line box overhangs the letters by
 // the font's side bearings (and trailing tracking), so add those back in.
 const flush = [];
-for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [375, 780]]) {
+for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [390, 844], [375, 667]]) {
   await p.setViewport({ width: w, height: h });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
   const m = await p.evaluate(() => {
@@ -303,11 +322,9 @@ for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820,
     return {
       strip: [t.left, t.right], fs,
       line: [Math.min(...rects.map((x) => x.left)), Math.max(...rects.map((x) => x.right))],
-      oneLine: matchMedia('(min-width: 64em)').matches,
     };
   });
-  const lsb = m.oneLine ? 0.08 : 0.02;
-  const left = m.line[0] + lsb * m.fs, right = m.line[1] - 0.173 * m.fs;
+  const left = m.line[0] + 0.02 * m.fs, right = m.line[1] - 0.173 * m.fs;
   if (Math.abs(left - m.strip[0]) > 3 || Math.abs(right - m.strip[1]) > 3) {
     flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, pictures ${Math.round(m.strip[0])}-${Math.round(m.strip[1])}`);
   }

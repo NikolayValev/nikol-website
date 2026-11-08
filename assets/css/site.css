@@ -38,8 +38,6 @@
      the only one that cannot overrun the gutter if the placeholder face is
      later swapped for a wider one. */
   --step-4: min(4.5rem, 10.5vw);
-  /* The same name on one line, at desktop width. See .display below. */
-  --step-4-one-line: min(4.5rem, 7vw);
 
   --space-2xs: clamp(0.5rem, 0.47rem + 0.16vw, 0.62rem);
   --space-xs: clamp(0.75rem, 0.70rem + 0.24vw, 0.94rem);
@@ -178,20 +176,10 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   padding-block-start: var(--space-xl);
 }
 
-/* Phones: two lines, "NIKOL" over "TSVETANOVA", as the iPhone frames draw it. */
+/* Two lines on every page and every screen: "NIKOL" over "TSVETANOVA", as the
+   iPhone frames draw it. (The home page sizes its own name from the width of
+   the pictures; see "Home" below.) */
 .wordmark-line { display: block; }
-
-/* Desktop: one line, sitting closer to the top, so the home page fits a
-   laptop screen without scrolling. Every page gets the same treatment so the
-   name never jumps between one line and two as you click through the nav.
-   "NIKOL TSVETANOVA" with its tracking measures ~12em in Zalando Sans; 7vw
-   keeps it inside the gutters from 1024px up. (The home page sizes its own
-   name from the width of the pictures instead; see "Home" below.) */
-@media (min-width: 64em) {
-  .site-header { padding-block-start: var(--space-m); }
-  .display { font-size: var(--step-4-one-line); }
-  .wordmark-line { display: inline; }
-}
 
 /* ---------- Navigation ---------- */
 /* Static, centred, in the flow. It is no longer pinned to the bottom of the
@@ -346,21 +334,41 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 }
 
 /* ---------- Home ---------- */
-/* Order differs by breakpoint. On desktop the nav sits *under* the picture
-   strip (comps "Landing Page"); on phones and tablets the "+" sits between the
-   name and the pictures (comp "iPhone 14 & 15 Pro Max - 1"). Same markup, same
+/* The home page is exactly one screen tall and does not scroll, on every
+   device. Everything on it is sized from the screen: --home-w, below, is the
+   width of the picture block, and the name and the pictures are both derived
+   from it. Order differs by breakpoint. On desktop the nav sits *under* the
+   pictures (comps "Landing Page"); under 1024px the "+" sits between the name
+   and the pictures (comp "iPhone 14 & 15 Pro Max - 1"). Same markup, same
    source order for the keyboard — only the desktop nav moves. */
+html:has(.is-home) { overflow: hidden; }
 .is-home {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
-  /* The name and the pictures share one width, --home-w, so the first letter
-     sits on the left edge of the first picture and the last letter on the
-     right edge of the last. Phones and tablets: the 2x2 block, as wide as the
-     screen allows up to 34rem, so on a tablet it stays a block rather than
-     stretching into pictures taller than the screen. Desktop overrides this
-     below. */
-  --home-w: min(100% - (2 * var(--space-m)), 34rem);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* Width : height of one picture. Phones and tablets stack them 2x2. */
+  --tile-ar: 0.8;
+  --tile-gap: var(--space-2xs);
+  /* Height of the two-line name per unit of its width: 2 lines x line-height
+     1.05, over 7.7733em, the measured ink width of "TSVETANOVA" in Zalando
+     Sans at weight 300 with 0.16em tracking. */
+  --home-name: calc(2 * 1.05 / 7.7733);
+  /* Phones and tablets. A 2x2 block is (width - gap) / ar + gap tall; add the
+     name's height (width * name) and the rows around them (--home-other), set
+     that equal to the screen, and solve for the width. Capped at 40rem so a
+     tablet does not stretch it, and floored at 10rem so a squat window
+     shrinks the block rather than clipping the nav. */
+  --home-other: calc(
+    var(--space-xl) + var(--space-l) + var(--step-3) + var(--space-2xs) * 2 +
+    var(--space-m) + 1.5rem + var(--space-l) + 1.75rem
+  );
+  --home-fit: calc(
+    (100svh - var(--home-other) + var(--tile-gap) / var(--tile-ar) - var(--tile-gap)) /
+    (var(--home-name) + 1 / var(--tile-ar))
+  );
+  --home-w: min(100% - (2 * var(--space-m)), 40rem, max(var(--home-fit), 10rem));
 }
 .is-home > .site-header { order: 1; }
 .is-home > .site-nav { order: 2; }
@@ -370,38 +378,11 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 .is-home > .site-header,
 .is-home > main { width: var(--home-w); }
 
-/* Tablets (768-1023px): the same 2x2 block and "+" menu as a phone, but sized
-   to the screen. At 34rem across, 62:100 portraits stand 870px tall and the
-   second row falls below the fold, so the frames are 4:5 here and the block
-   is as wide as lets the name, the block and the icon row fit one screen.
-   Two rows of 4:5 frames and one gap are 1.25 widths less a quarter gap tall,
-   and the two-line name is 2 * 1.05 / 7.7733 widths tall; --home-other is
-   everything else: header padding, the "+" row, and the footer. Floored at
-   22rem so a squat window scrolls instead of shrinking to a postage stamp. */
-@media (min-width: 48em) and (max-width: 63.999em) {
-  .is-home {
-    --home-other: calc(
-      var(--space-xl) + var(--space-l) + var(--step-3) + var(--space-2xs) * 2 +
-      var(--space-m) + 1.5rem + var(--space-2xl) + 1.75rem
-    );
-    --home-w: min(
-      100% - (2 * var(--space-m)),
-      40rem,
-      max(
-        (100svh - var(--home-other) + var(--space-2xs) / 4) / (1.25 + 2 * 1.05 / 7.7733),
-        22rem
-      )
-    );
-  }
-}
-
 /* The header is a size container so the name can be sized as a share of its
    width (cqw): font-size cannot take a percentage of anything but the parent's
-   font size. The divisors are the name's measured ink width in Zalando Sans at
-   weight 300 with 0.16em tracking — 7.7733em for "TSVETANOVA", the longer
-   line of the two-line name; 11.8276em for the one-line name on desktop. The
-   margins are the font's side bearings (and the trailing tracking), so the ink
-   itself, not the line box, lands on the picture edges. */
+   font size. The divisor is the ink width above. The margins are the font's
+   side bearings and the trailing tracking, so the letters themselves, not the
+   line box, land on the picture edges. */
 .is-home > .site-header { container-type: inline-size; }
 .is-home .display {
   font-size: calc(100cqw / 7.7733);
@@ -411,7 +392,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 /* The home frames carry only the icon row — no rule, no copyright. */
 .is-home .site-footer {
   margin-block-start: var(--space-m);
-  padding-block-end: var(--space-2xl);
+  padding-block-end: var(--space-l);
   border-block-start: 0;
 }
 .is-home .footer-note,
@@ -419,11 +400,9 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 .is-home .socials { grid-column: 1 / -1; }
 
 @media (min-width: 64em) {
-  /* The whole home page — name, pictures, nav and icons — fits one desktop
-     screen with no scrolling. --home-other is every vertical gap and row that
-     is not the name or the pictures; change a gap here and it is accounted
-     for. */
+  /* Desktop: four pictures in a row, the nav underneath. */
   .is-home {
+    --tile-ar: 0.7;
     --home-strip-gap: var(--space-l);
     --home-nav-gap: min(var(--space-2xl), 6vh);
     --home-footer-gap: var(--space-s);
@@ -433,33 +412,22 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
       var(--home-strip-gap) +
       var(--home-nav-gap) + var(--step-1) * 1.6 + var(--space-2xs) * 2 +
       var(--home-footer-gap) + 1.5rem + var(--home-bottom) +
-      0.5rem
+      0.75rem
     );
-    /* Height of the name per unit of its width: line-height 1.05 over 11.8276em. */
-    --home-name: calc(1.05 / 11.8276);
-    /* The width at which name + pictures + everything else is exactly one
-       screen tall. A picture is 62:100, four across with three gaps, so its
-       height is (width - 3 gaps) / 2.48; add the name's height (width * name)
-       and solve for the width. On a short screen this is what makes the
-       pictures smaller; the name shrinks with them, and keeps matching. */
+    /* A row of four is (width - 3 gaps) / (4 x ar) tall. */
     --home-fit: calc(
-      (100vh - var(--home-other) + 3 * var(--space-2xs) / 2.48) /
-      (var(--home-name) + 0.4032)
+      (100vh - var(--home-other) + 3 * var(--tile-gap) / (4 * var(--tile-ar))) /
+      (var(--home-name) + 1 / (4 * var(--tile-ar)))
     );
-    /* Capped at 72rem (1152px) rather than the comps' full 82rem: with the name
-       now as wide as the pictures, the pictures give up some size so the name
-       is not 120px tall. Past 1600px it grows with the screen (72vw) so a big
+    /* Capped at 72rem, and past 1600px it grows with the screen (72vw) so a big
        monitor is not left with a band of empty cream below the icons. */
     --home-w: min(
       100% - (2 * var(--space-m)),
       max(72rem, 72vw),
-      max(var(--home-fit), 40rem)
+      max(var(--home-fit), 20rem)
     );
   }
-  .is-home .display {
-    font-size: calc(100cqw / 11.8276);
-    margin-inline: -0.08em -0.173em;
-  }
+  .is-home > .site-header { padding-block-start: var(--space-m); }
   .is-home > main { order: 2; margin-block-start: var(--home-strip-gap); }
   .is-home > .site-nav { order: 3; margin-block-start: var(--home-nav-gap); }
   .is-home .site-footer {
@@ -484,11 +452,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   list-style: none;
 }
 
-.strip-slide { aspect-ratio: 62 / 100; }
-/* Tablets crop to 4:5 so the 2x2 block fits the screen (see "Home"). */
-@media (min-width: 48em) and (max-width: 63.999em) {
-  .strip-slide { aspect-ratio: 4 / 5; }
-}
+.strip-slide { aspect-ratio: var(--tile-ar); }
 
 .strip-slide picture,
 .strip-slide img { width: 100%; height: 100%; }

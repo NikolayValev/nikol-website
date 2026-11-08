@@ -88,16 +88,18 @@ Website". Two things about it are worth knowing before you touch the CSS:
 - **The font is Zalando Sans, for everything.** It is a variable face
   (weights 200-900), self-hosted from `assets/fonts/zalando-sans.woff2` (the
   Latin subset, from Google Fonts, SIL OFL) and preloaded on every page. The
-  home page sizes the name from the width of the picture block, using the
-  font's *measured* ink width (7.7733em for "TSVETANOVA", 11.8276em for the
-  one-line name) and its side bearings, so the letters land on the picture
-  edges. **If you change the font, re-measure those numbers** (they are in the
+  home page sizes the name (two lines, on every screen) from the width of the
+  picture block, using the font's *measured* ink width (7.7733em for
+  "TSVETANOVA") and its side bearings, so the letters land on the picture
+  edges. **If you change the font, re-measure that number** (it is in the
   "Home" section of `assets/css/site.css`) or the name will no longer line up;
   `node tools/strip-test.mjs` fails with "name is as wide as the pictures".
-- **Phones and tablets share one home design; desktop starts at 1024px.** Under
-  1024px the home page is the 2x2 block with the "+" menu. On a tablet the block
-  is sized so the whole page fits the screen; on desktop the same is done for
-  the row of four.
+- **The home page is exactly one screen tall and cannot scroll**, on every
+  device (`overflow: hidden`). The picture block is sized from the screen
+  height so the name, pictures, nav and icons always fit; if you add anything
+  to the home page, add its height to `--home-other` in the same section, or
+  the test "home is one screen and does not scroll" will fail. Under 1024px the
+  pictures are a 2x2 block with the "+" menu; from 1024px, a row of four.
 - **The inactive nav grey is deliberately darker than the comps.** Mila's grey
   samples as `#8B8680`, which is 3.02:1 against the cream — below WCAG AA, on
   the primary navigation. The token is `#6B6762` (4.7:1) instead. The reason
