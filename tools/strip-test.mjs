@@ -54,7 +54,7 @@ const homeFooter = await p.evaluate(() => {
   };
 });
 say('home footer is the icon row only', homeFooter
-    && homeFooter.socials === 3
+    && homeFooter.socials === 4
     && !homeFooter.noteShown
     && !homeFooter.creditShown
     && homeFooter.rule === '0px',
@@ -381,6 +381,50 @@ for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [1024
 }
 say('pictures are shown uncropped, at their own proportions', crop.length === 0, crop.join(' ; '));
 say('little space below the icon row', gapBottom.length === 0, gapBottom.join(' ; '));
+
+// --- one gap between pictures, one side margin ---
+// The gallery's gap between pictures is the home row's gap; the gallery's side
+// margin is the page's (--gutter), and on a phone the home block's too. The
+// gallery's narrow pictures are as tall as the wide ones beside them.
+const same = [];
+for (const [w, h] of [[1440, 900], [1024, 768], [820, 1180], [390, 1000]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const home = await p.evaluate(() => {
+    const px = (v) => { const d = document.createElement('div'); d.style.cssText = 'position:absolute;visibility:hidden;height:' + v; document.body.appendChild(d); const x = d.getBoundingClientRect().height; d.remove(); return x; };
+    const sl = [...document.querySelectorAll('.strip-slide:not([aria-hidden="true"])')].map((e) => e.getBoundingClientRect());
+    return { gap: parseFloat(getComputedStyle(document.querySelector('.strip-track')).columnGap), rowGap: parseFloat(getComputedStyle(document.querySelector('.strip-track')).rowGap), gutter: px('var(--gutter)'), left: document.querySelector('.strip-track').getBoundingClientRect().left };
+  });
+  await p.goto(base + '/gallery', { waitUntil: 'networkidle0' });
+  const gal = await p.evaluate(() => {
+    const f = [...document.querySelectorAll('.mosaic .figure')].map((e) => e.getBoundingClientRect());
+    const mos = document.querySelector('.mosaic').getBoundingClientRect();
+    const imgs = [...document.querySelectorAll('.mosaic .figure > a')].map((e) => e.getBoundingClientRect());
+    // rows: group by top edge; every picture in a row ends at the same bottom
+    const rows = {};
+    imgs.forEach((r) => { const k = Math.round(r.top); (rows[k] = rows[k] || []).push(r.bottom); });
+    const ragged = Object.values(rows).filter((b) => Math.max(...b) - Math.min(...b) > 1.5).length;
+    const cs = getComputedStyle(document.querySelector('.mosaic'));
+    return { gap: parseFloat(cs.columnGap), rowGap: parseFloat(cs.rowGap), left: mos.left, right: innerWidth - mos.right, ragged };
+  });
+  if (Math.abs(home.gap - gal.gap) > 0.5 || Math.abs(home.gap - gal.rowGap) > 0.5) same.push(`${w}: home gap ${home.gap.toFixed(1)}, gallery ${gal.gap.toFixed(1)} across / ${gal.rowGap.toFixed(1)} down`);
+  if (Math.abs(gal.left - home.gutter) > 1 || Math.abs(gal.right - home.gutter) > 1) same.push(`${w}: gallery sides ${gal.left.toFixed(1)}/${gal.right.toFixed(1)}, gutter ${home.gutter.toFixed(1)}`);
+  if (w === 390 && Math.abs(home.left - home.gutter) > 1) same.push(`${w}: home side ${home.left.toFixed(1)}, gutter ${home.gutter.toFixed(1)}`);
+  if (w >= 768 && gal.ragged) same.push(`${w}: ${gal.ragged} gallery rows with uneven picture heights`);
+}
+say('gallery and home share one gap and one side margin; gallery rows line up', same.length === 0, same.join(' ; '));
+
+// --- Actors Access is in every footer ---
+const aa = [];
+for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
+  await p.goto(base + u, { waitUntil: 'domcontentloaded' });
+  const ok = await p.evaluate(() => {
+    const a = document.querySelector('.site-footer a[href="https://resumes.actorsaccess.com/nikoltsvetanova"]');
+    return !!a && a.textContent.trim() === 'Actors Access' && a.target === '_blank' && /noopener/.test(a.rel);
+  });
+  if (!ok) aa.push(u);
+}
+say('Actors Access link in every footer', aa.length === 0, aa.join(' '));
 
 // --- tablets: a 2x2 block that fits the screen ---
 const tab = [];

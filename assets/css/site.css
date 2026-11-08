@@ -48,6 +48,11 @@
   --space-2xl: clamp(4.5rem, 4.03rem + 2.34vw, 6.25rem);
   --space-3xl: clamp(6rem, 5.06rem + 4.69vw, 9.5rem);
 
+  /* One gap between pictures, everywhere: the home row, the gallery, the
+     headshots. And one smallest side margin for the page and for pictures. */
+  --tile-gap: var(--space-2xs);
+  --gutter: var(--space-s);
+
   /* The comps centre their prose in a column narrower than the page. */
   --measure: 46rem;
   /* Content width in the comps is 1315 of 1440, i.e. a 4rem gutter either
@@ -101,8 +106,14 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 
 /* ---------- Utilities ---------- */
 .wrap {
-  width: min(100% - (2 * var(--space-m)), var(--content));
+  width: min(100% - (2 * var(--gutter)), var(--content));
   margin-inline: auto;
+}
+
+/* Pages that are mostly pictures: the pictures run out to the same side margin
+   as the home page's, rather than stopping at the reading width. */
+.wrap-wide {
+  width: min(100% - (2 * var(--gutter)), 120rem);
 }
 
 .measure { max-width: var(--measure); }
@@ -300,10 +311,16 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--space-m);
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-m);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+@media (max-width: 47.999em) {
+  /* Four links must stay on one line at 320px wide. */
+  .socials { gap: var(--space-2xs) var(--space-s); }
 }
 
 .socials a {
@@ -315,6 +332,18 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 
 .socials svg { display: block; width: 1.5rem; height: 1.5rem; fill: currentColor; }
 .socials img { width: auto; height: 1.15rem; }
+/* A link with words rather than a mark (Actors Access has no logo in the repo
+   yet): set to the weight and height of the IMDb mark beside it. */
+.socials .socials-text {
+  display: block;
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.5rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 
 .footer-credit {
   grid-column: 1 / -1;
@@ -348,7 +377,6 @@ html:has(.is-home) { overflow: hidden; }
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  --tile-gap: var(--space-2xs);
   /* The four pictures' width:height ratios (the --ar on each slide in
      index.html): 3209/4971, 3308/5232, 2896/4765, 3648/4977. */
   --home-sum: 2.618544;
@@ -377,7 +405,7 @@ html:has(.is-home) { overflow: hidden; }
     (100svh - var(--home-other) + var(--tile-gap) * var(--home-k2) - var(--tile-gap)) /
     (var(--home-name) + var(--home-k2))
   );
-  --home-w: min(100% - (2 * var(--space-s)), 40rem, max(var(--home-fit), 10rem));
+  --home-w: min(100% - (2 * var(--gutter)), 40rem, max(var(--home-fit), 10rem));
 }
 .is-home > .site-header { order: 1; }
 .is-home > .site-nav { order: 2; }
@@ -418,7 +446,7 @@ html:has(.is-home) { overflow: hidden; }
      own space above the capitals (0.16em) and below the baseline (0.17em). */
   .is-home {
     --home-gap: var(--space-xl);
-    --home-side: var(--space-s);
+    --home-side: var(--gutter);
     --home-nav-gap: min(var(--space-2xl), 5vh);
     --home-footer-gap: var(--space-s);
     --home-bottom: var(--space-s);
@@ -538,7 +566,7 @@ html:has(.is-home) { overflow: hidden; }
 .grid-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-  gap: var(--space-s);
+  gap: var(--tile-gap);
 }
 
 .grid-gallery.is-wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); }
@@ -549,12 +577,16 @@ html:has(.is-home) { overflow: hidden; }
 .mosaic {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-s);
+  gap: var(--tile-gap);
 }
 .mosaic .figure { grid-column: span 2; }
 .mosaic .figure.is-narrow { grid-column: span 1; }
 .mosaic .figure > a { display: block; aspect-ratio: 3 / 2; }
-.mosaic .figure.is-narrow > a { aspect-ratio: 3 / 4; }
+/* A narrow picture is as tall as the wide one beside it, whatever the gap is
+   between them (a wide picture is two columns and a gap across, so no fixed
+   ratio on the narrow one can match it): it fills the row's height instead. */
+.mosaic .figure.is-narrow { display: flex; flex-direction: column; }
+.mosaic .figure.is-narrow > a { flex: 1; aspect-ratio: auto; min-height: 0; }
 .mosaic .figure img { width: 100%; height: 100%; object-fit: cover; }
 
 @media (max-width: 47.99em) {
@@ -563,7 +595,8 @@ html:has(.is-home) { overflow: hidden; }
     grid-auto-flow: dense;          /* keep a lone narrow image company */
   }
   .mosaic .figure > a { aspect-ratio: 4 / 3; }
-  .mosaic .figure.is-narrow > a { aspect-ratio: 3 / 4; }
+  .mosaic .figure.is-narrow { display: block; }
+  .mosaic .figure.is-narrow > a { flex: none; aspect-ratio: 3 / 4; }
 }
 
 .figure { margin: 0; }
