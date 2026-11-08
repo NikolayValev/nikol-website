@@ -400,35 +400,46 @@ html:has(.is-home) { overflow: hidden; }
 .is-home .socials { grid-column: 1 / -1; }
 
 @media (min-width: 64em) {
-  /* Desktop: four pictures in a row, the nav underneath. */
+  /* Desktop: four pictures in a row, the nav underneath. The name runs from the
+     centre of the first picture to the centre of the last, so it is narrower
+     than the row by one picture: (row - tile) = 0.75 x row + 0.75 x gap. Three
+     equal gaps frame it: above the name, below it, and (so the same) between it
+     and the pictures. --home-gap is the visible gap, cap-top to the top of the
+     screen and baseline to the pictures; the margins below take off the font's
+     own space above the capitals (0.16em) and below the baseline (0.17em). */
   .is-home {
-    --tile-ar: 0.7;
-    --home-strip-gap: var(--space-l);
-    --home-nav-gap: min(var(--space-2xl), 6vh);
+    --tile-ar: 0.8;
+    --home-gap: var(--space-xl);
+    --home-side: var(--space-s);
+    --home-nav-gap: min(var(--space-2xl), 5vh);
     --home-footer-gap: var(--space-s);
     --home-bottom: var(--space-m);
     --home-other: calc(
-      var(--space-m) +
-      var(--home-strip-gap) +
+      2 * var(--home-gap) +
       var(--home-nav-gap) + var(--step-1) * 1.6 + var(--space-2xs) * 2 +
       var(--home-footer-gap) + 1.5rem + var(--home-bottom) +
       0.75rem
     );
-    /* A row of four is (width - 3 gaps) / (4 x ar) tall. */
+    /* Name height = home-name x (0.75 x row + 0.75 x gap). Row height =
+       (row - 3 gaps) / (4 x ar). Set the total equal to the screen and solve
+       for the row width. This is what keeps the page one screen tall; the
+       sides are whatever it leaves, down to --home-side. */
     --home-fit: calc(
-      (100vh - var(--home-other) + 3 * var(--tile-gap) / (4 * var(--tile-ar))) /
-      (var(--home-name) + 1 / (4 * var(--tile-ar)))
+      (100vh - var(--home-other) - 0.75 * var(--home-name) * var(--tile-gap) +
+        3 * var(--tile-gap) / (4 * var(--tile-ar))) /
+      (0.75 * var(--home-name) + 1 / (4 * var(--tile-ar)))
     );
-    /* Capped at 72rem, and past 1600px it grows with the screen (72vw) so a big
-       monitor is not left with a band of empty cream below the icons. */
     --home-w: min(
-      100% - (2 * var(--space-m)),
-      max(72rem, 72vw),
+      100% - (2 * var(--home-side)),
       max(var(--home-fit), 20rem)
     );
   }
-  .is-home > .site-header { padding-block-start: var(--space-m); }
-  .is-home > main { order: 2; margin-block-start: var(--home-strip-gap); }
+  .is-home > .site-header { padding-block-start: 0; }
+  .is-home .display {
+    font-size: calc((75cqw + 0.75 * var(--tile-gap)) / 7.7733);
+    margin-block: calc(var(--home-gap) - 0.16em) calc(var(--home-gap) - 0.17em);
+  }
+  .is-home > main { order: 2; }
   .is-home > .site-nav { order: 3; margin-block-start: var(--home-nav-gap); }
   .is-home .site-footer {
     margin-block-start: 0;

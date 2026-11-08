@@ -304,32 +304,59 @@ for (const [w, want] of [[1920, 2], [1440, 2], [1024, 2], [820, 2], [768, 2], [3
 }
 say('name is on two lines on every screen', lines.length === 0, lines.join(' ; '));
 
-// --- the name is as wide as the pictures ---
-// The first letter sits on the first picture's left edge and the last letter on
-// the last picture's right edge. The name's line box overhangs the letters by
-// the font's side bearings (and trailing tracking), so add those back in.
+// --- the name lines up with the pictures ---
+// Phones and tablets: first letter on the block's left edge, last letter on its
+// right edge. Desktop: first letter over the centre of the first picture, last
+// letter over the centre of the last. The name's line box overhangs the letters
+// by the font's side bearings (and trailing tracking), so add those back in.
+// Desktop also has three equal gaps: above the name (screen top to the top of
+// the capitals), below it (baseline to the pictures) — and they match the
+// design token. Measured on text rects (the font's content area): the capitals start 0.24em below a text rect's top and the baseline sits 0.25em above its bottom (in the line box: 0.16em and 0.17em).
 const flush = [];
 for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [390, 844], [375, 667]]) {
   await p.setViewport({ width: w, height: h });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
   const m = await p.evaluate(() => {
     const t = document.querySelector('.strip-track').getBoundingClientRect();
+    const slides = [...document.querySelectorAll('.strip-slide:not([aria-hidden="true"])')].map((x) => x.getBoundingClientRect());
     const h1 = document.querySelector('h1.display');
     const fs = parseFloat(getComputedStyle(h1).fontSize);
-    const r = document.createRange();
-    r.selectNodeContents(h1);
-    const rects = [...r.getClientRects()].filter((x) => x.width > 0);
+    // The text itself, not the block-level <span>s around it.
+    const rects = [];
+    const walk = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (!n.textContent.trim()) continue;
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      rects.push(...[...r.getClientRects()].filter((x) => x.width > 0));
+    }
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--home-gap,0px)';
+    document.body.appendChild(probe);
+    const gapPx = probe.getBoundingClientRect().height;
+    probe.remove();
     return {
-      strip: [t.left, t.right], fs,
+      strip: [t.left, t.right, t.top], slides: slides.map((x) => [x.left, x.right]), fs, gapPx,
       line: [Math.min(...rects.map((x) => x.left)), Math.max(...rects.map((x) => x.right))],
+      top: Math.min(...rects.map((x) => x.top)), bottom: Math.max(...rects.map((x) => x.bottom)),
+      desktop: matchMedia('(min-width: 64em)').matches,
     };
   });
   const left = m.line[0] + 0.02 * m.fs, right = m.line[1] - 0.173 * m.fs;
-  if (Math.abs(left - m.strip[0]) > 3 || Math.abs(right - m.strip[1]) > 3) {
-    flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, pictures ${Math.round(m.strip[0])}-${Math.round(m.strip[1])}`);
+  const first = m.slides[0], last = m.slides[m.slides.length - 1];
+  const wantL = m.desktop ? (first[0] + first[1]) / 2 : m.strip[0];
+  const wantR = m.desktop ? (last[0] + last[1]) / 2 : m.strip[1];
+  if (Math.abs(left - wantL) > 3 || Math.abs(right - wantR) > 3) {
+    flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, want ${Math.round(wantL)}-${Math.round(wantR)}`);
+  }
+  if (m.desktop) {
+    const above = m.top + 0.24 * m.fs, below = m.strip[2] - (m.bottom - 0.25 * m.fs);
+    if (Math.abs(above - below) > 3 || Math.abs(above - m.gapPx) > 3) {
+      flush.push(`${w}x${h}: gap above ${above.toFixed(1)}, below ${below.toFixed(1)}, token ${m.gapPx.toFixed(1)}`);
+    }
   }
 }
-say('name is as wide as the pictures', flush.length === 0, flush.join(' ; '));
+say('name lines up with the pictures; equal gaps above and below it', flush.length === 0, flush.join(' ; '));
 
 // --- tablets: a 2x2 block that fits the screen ---
 const tab = [];
