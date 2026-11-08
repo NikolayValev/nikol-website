@@ -64,6 +64,25 @@ It checks that the site is up, that old URLs still redirect (including the
 résumé PDF path that may be in casting inboxes), that working directories are
 not served, and that cache headers arrived.
 
+## The layout designer
+
+A tool for the designer to set the home page's sizes, gaps and alignments by
+eye. Open the home page with **`?design`** on the end
+(`https://nikoltsvetanova.com/?design`, or the same on a preview link). A
+panel appears with sliders for the row width, the title size, the gaps above and
+below the title and around the nav and icons, the side margins, whether the
+pictures are cropped to one shape, and what the title lines up with. Guides
+mark the edges, the picture centres and the title's letters, and measure every
+gap; the readout says whether the page still fits one screen. **Copy settings**
+puts the numbers on the clipboard to send back. It works on the desktop layout
+(window 1024px wide or more).
+
+It is one self-contained component. Visitors never see it (no `?design`, no
+panel). **To remove it:** delete the `<script ... layout-designer.js>` line in
+`index.html`, delete `assets/js/layout-designer.js`, its line in
+`tools/deploy-manifest.txt`, and `tools/designer-test.mjs`. It changes nothing in
+`site.css`; everything it does is an inline style it can put back.
+
 ## Changing images
 
 Drop new originals in `_source/images/`, add a row to the `RENAMES` map in

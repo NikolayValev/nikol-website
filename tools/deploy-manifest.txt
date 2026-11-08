@@ -234,6 +234,7 @@ assets/img/reel-dramatic-1280.webp
 assets/img/reel-dramatic-640.avif
 assets/img/reel-dramatic-640.jpg
 assets/img/reel-dramatic-640.webp
+assets/js/layout-designer.js
 assets/js/site.js
 assets/video/.gitkeep
 favicon.svg
