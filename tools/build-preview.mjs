@@ -57,9 +57,9 @@ const baseName = (url) => {
 
 // --- shared assets -----------------------------------------------------------
 
-const fontB64 = (await readFile(join(ROOT, 'assets', 'fonts', 'mirra.woff2'))).toString('base64');
+const fontB64 = (await readFile(join(ROOT, 'assets', 'fonts', 'zalando-sans.woff2'))).toString('base64');
 const css = (await readFile(join(ROOT, 'assets', 'css', 'site.css'), 'utf8')).replace(
-  /url\("\.\.\/fonts\/mirra\.woff2"\)/,
+  /url\("\.\.\/fonts\/zalando-sans.woff2"\)/,
   `url("data:font/woff2;base64,${fontB64}")`,
 );
 const js = await readFile(join(ROOT, 'assets', 'js', 'site.js'), 'utf8');

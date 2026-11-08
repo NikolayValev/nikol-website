@@ -4,7 +4,7 @@ README.md
 about.html
 assets/css/site.css
 assets/docs/nikol-tsvetanova-resume.pdf
-assets/fonts/mirra.woff2
+assets/fonts/zalando-sans.woff2
 assets/img/gallery-01-1280.avif
 assets/img/gallery-01-1280.jpg
 assets/img/gallery-01-1280.webp

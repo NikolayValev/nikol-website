@@ -7,7 +7,7 @@ document.documentElement.classList.remove('no-js');
 // One breakpoint, named once. Below it the nav is a sheet behind a "+" and the
 // picture strip is a static 2x2 block; at or above it the nav is a row and the
 // strip is a rotating line of four. Both must agree with site.css.
-const WIDE = '(min-width: 48em)';
+const WIDE = '(min-width: 64em)';
 
 function initNav() {
   const toggle = document.querySelector('.nav-toggle');
@@ -146,7 +146,7 @@ function initVideoFacade() {
 }
 
 // The home picture strip. Only a rotation where the strip is actually a row:
-// below 48em the comps draw a static 2x2 block, and cloning into a two-column
+// below 64em the comps draw a static 2x2 block, and cloning into a two-column
 // grid would just make it eight pictures deep.
 function initStrip() {
   const strip = document.querySelector('.strip');

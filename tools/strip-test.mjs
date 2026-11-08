@@ -273,30 +273,88 @@ for (const [w, h] of [[1920, 1080], [1536, 864], [1440, 900], [1440, 1024], [136
 }
 say('home fits desktop screens without scrolling', scrolls.length === 0, scrolls.join(' ; '));
 
-// --- the name is one line on desktop, two on a phone ---
+// --- the name is one line on desktop, two on phones and tablets ---
+// Tablets (under 1024px) take the phone design: two-line name, 2x2 block, "+".
 const lines = [];
-for (const [w, want] of [[1920, 1], [1440, 1], [1024, 1], [768, 1], [375, 2]]) {
+for (const [w, want] of [[1920, 1], [1440, 1], [1024, 1], [820, 2], [768, 2], [375, 2]]) {
   await p.setViewport({ width: w, height: 900 });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
   const n = await p.$eval('.display', (h) =>
     Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)));
   if (n !== want) lines.push(`${w}px: ${n} lines, want ${want}`);
 }
-say('name is one line on desktop, two on a phone', lines.length === 0, lines.join(' ; '));
-await p.setViewport({ width: 1440, height: 1024 });
-await p.goto(base + '/', { waitUntil: 'domcontentloaded' });
-const compStrip = await p.$eval('.strip', (s) => Math.round(s.getBoundingClientRect().width));
-say('strip is full width at the comps\' 1440x1024', compStrip === 1312, `${compStrip}px`);
+say('name is one line on desktop, two on phones and tablets', lines.length === 0, lines.join(' ; '));
+
+// --- the name is as wide as the pictures ---
+// The first letter sits on the first picture's left edge and the last letter on
+// the last picture's right edge. The name's line box overhangs the letters by
+// the font's side bearings (and trailing tracking), so add those back in.
+const flush = [];
+for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [375, 780]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(() => {
+    const t = document.querySelector('.strip-track').getBoundingClientRect();
+    const h1 = document.querySelector('h1.display');
+    const fs = parseFloat(getComputedStyle(h1).fontSize);
+    const r = document.createRange();
+    r.selectNodeContents(h1);
+    const rects = [...r.getClientRects()].filter((x) => x.width > 0);
+    return {
+      strip: [t.left, t.right], fs,
+      line: [Math.min(...rects.map((x) => x.left)), Math.max(...rects.map((x) => x.right))],
+      oneLine: matchMedia('(min-width: 64em)').matches,
+    };
+  });
+  const lsb = m.oneLine ? 0.08 : 0.02;
+  const left = m.line[0] + lsb * m.fs, right = m.line[1] - 0.173 * m.fs;
+  if (Math.abs(left - m.strip[0]) > 3 || Math.abs(right - m.strip[1]) > 3) {
+    flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, pictures ${Math.round(m.strip[0])}-${Math.round(m.strip[1])}`);
+  }
+}
+say('name is as wide as the pictures', flush.length === 0, flush.join(' ; '));
+
+// --- tablets: a 2x2 block that fits the screen ---
+const tab = [];
+for (const [w, h] of [[768, 1024], [820, 1180], [834, 1194]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/', { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(() => ({
+    cols: getComputedStyle(document.querySelector('.strip-track')).gridTemplateColumns.split(' ').length,
+    slides: document.querySelectorAll('.strip-slide').length,
+    toggle: getComputedStyle(document.querySelector('.nav-toggle')).display,
+    doc: document.documentElement.scrollHeight,
+  }));
+  if (m.cols !== 2 || m.slides !== 4 || m.toggle === 'none' || m.doc > h) {
+    tab.push(`${w}x${h}: ${m.cols} cols, ${m.slides} slides, toggle ${m.toggle}, page ${m.doc}px`);
+  }
+}
+say('tablet home is the 2x2 block with "+", and fits the screen', tab.length === 0, tab.join(' ; '));
+
+// --- one font for everything ---
+await p.setViewport({ width: 1280, height: 900 });
+const fonts = [];
+for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
+  await p.goto(base + u, { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(async () => {
+    await document.fonts.ready;
+    const fams = new Set([...document.querySelectorAll('body, h1, h2, p, a, button, figcaption, li')]
+      .map((e) => getComputedStyle(e).fontFamily.split(',')[0].trim()));
+    return { fams: [...fams], loaded: document.fonts.check('300 20px "Zalando Sans"') };
+  });
+  if (m.fams.length !== 1 || !m.fams[0].includes('Zalando Sans') || !m.loaded) fonts.push(`${u}: ${m.fams.join('|')} loaded=${m.loaded}`);
+}
+say('Zalando Sans on every page, and it loads', fonts.length === 0, fonts.join(' ; '));
 
 // --- the nav row never strands an item on a line of its own ---
 const wrapped = [];
-for (const w of [768, 820, 1024, 1440]) {
+for (const w of [1024, 1100, 1440]) {
   await p.setViewport({ width: w, height: 1024 });
   await p.goto(base + '/about', { waitUntil: 'domcontentloaded' });
   const rows = await p.$$eval('.nav-list li', (els) => new Set(els.map((e) => e.offsetTop)).size);
   if (rows !== 1) wrapped.push(`${w}px: ${rows} rows`);
 }
-say('desktop nav is one row from 768px up', wrapped.length === 0, wrapped.join(' ; '));
+say('desktop nav is one row from 1024px up', wrapped.length === 0, wrapped.join(' ; '));
 await p.close();
 
 await b.close();
