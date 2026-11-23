@@ -11,7 +11,7 @@
 //
 // Output: preview/nikoltsvetanova-preview.html (git-ignored, not deployed)
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -21,7 +21,9 @@ const PAGES = [
   ['about.html', 'About'],
   ['headshots.html', 'Headshots'],
   ['reel.html', 'Reel'],
+  ['resume.html', 'Resume'],
   ['gallery.html', 'Gallery'],
+  ['contact.html', 'Contact'],
   ['404.html', '404'],
 ];
 
@@ -33,15 +35,27 @@ const manifest = JSON.parse(
 // happens to have, and universal support is worth ~360 KB here.
 const PREVIEW_FORMAT = 'webp';
 const PREVIEW_CAP = 1280;
+// Images outside the manifest (the résumé page, drawn by render-resume.mjs)
+// are found by their file names instead. The résumé is small type, so it gets
+// a wider file than the photographs.
+const UNLISTED_CAP = 1600;
+const imgFiles = await readdir(join(ROOT, 'assets', 'img'));
 
 const dataUriCache = new Map();
 
 async function dataUri(imgName) {
   if (dataUriCache.has(imgName)) return dataUriCache.get(imgName);
   const entry = manifest[imgName];
-  if (!entry) throw new Error(`No manifest entry for ${imgName}`);
-  const width =
-    entry.widths.filter((w) => w <= PREVIEW_CAP).pop() ?? entry.widths[0];
+  const widths = entry
+    ? entry.widths
+    : imgFiles
+        .filter((f) => f.startsWith(`${imgName}-`) && f.endsWith(`.${PREVIEW_FORMAT}`))
+        .map((f) => Number(f.slice(imgName.length + 1, -(PREVIEW_FORMAT.length + 1))))
+        .filter(Number.isInteger)
+        .sort((a, b) => a - b);
+  if (!widths.length) throw new Error(`No manifest entry or ${PREVIEW_FORMAT} files for ${imgName}`);
+  const cap = entry ? PREVIEW_CAP : UNLISTED_CAP;
+  const width = widths.filter((w) => w <= cap).pop() ?? widths[0];
   const file = join(ROOT, 'assets', 'img', `${imgName}-${width}.${PREVIEW_FORMAT}`);
   const b64 = (await readFile(file)).toString('base64');
   const uri = `data:image/${PREVIEW_FORMAT};base64,${b64}`;
@@ -117,6 +131,12 @@ async function buildPage(file) {
   // <picture> carries AVIF/WebP/JPEG at three widths. Embedding all of that
   // would multiply the payload for no benefit, so collapse each to one image.
   html = html.replace(/<source[^>]*>\s*/g, '');
+  html = html.replace(/\s(?:srcset|sizes)="[^"]*"/g, '');
+
+  // The layout designer is a separate file the preview cannot load, and
+  // ?design cannot reach a page inside the preview's frame anyway.
+  html = html.replace(/<!-- Designer tool[^>]*-->\s*/g, '');
+  html = html.replace(/<script type="module" src="\/assets\/js\/layout-designer\.js"><\/script>\s*/g, '');
 
   // Rewrite every remaining image reference to an inlined data URI.
   const urls = new Set();
