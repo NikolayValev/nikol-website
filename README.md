@@ -2,7 +2,7 @@
 
 The personal site of Nikol Tsvetanova, actor, New York.
 
-Five pages plus a 404, hand-written and static, hosted on HostGator shared
+Seven pages plus a 404, hand-written and static, hosted on HostGator shared
 Apache and deployed by uploading files. **There is no build step** — the HTML,
 CSS, and JS in this repo are exactly what the server serves.
 
@@ -25,7 +25,7 @@ Before deploying, check nothing broke:
 node tools/check-links.mjs      # every local reference resolves
 node tools/strip-test.mjs      # home strip, nav, and the redesigned pages
 node tools/gallery-test.mjs    # the gallery mosaic still reads as a mosaic
-npx html-validate index.html about.html headshots.html reel.html gallery.html 404.html
+npx html-validate index.html about.html headshots.html reel.html resume.html gallery.html contact.html 404.html
 ```
 
 The two puppeteer scripts need `node tools/serve.mjs` already running.
@@ -34,7 +34,7 @@ The two puppeteer scripts need `node tools/serve.mjs` already running.
 
 | Path | What it is |
 |---|---|
-| `index.html` `about.html` `headshots.html` `reel.html` `gallery.html` `404.html` | The site. Deployed as-is. |
+| `index.html` `about.html` `headshots.html` `reel.html` `resume.html` `gallery.html` `contact.html` `404.html` | The site. Deployed as-is. |
 | `assets/` | Stylesheet, JS module, font, generated images, résumé PDF. Deployed. |
 | `.htaccess` | Caching, compression, clean URLs, redirects. Deployed. |
 | `_source/` | Original photographs and fonts. **Never deployed.** |
@@ -99,6 +99,20 @@ that manifest**: `srcset` may only list widths an image actually has. Sources
 here range from 1063px to 5075px wide, so not every image has every size, and a
 copy-pasted three-width `srcset` will 404.
 
+## Changing the résumé
+
+The Resume page shows the résumé as an image of its page, not the PDF itself.
+After replacing `assets/docs/nikol-tsvetanova-resume.pdf` (same name: old links
+point at it), redraw the image or the page keeps showing the old résumé:
+
+```bash
+node tools/render-resume.mjs
+```
+
+It writes `assets/img/resume-{1000,1600,2400}.{webp,png}`. It expects a
+one-page PDF and stops otherwise. If the page size changes from 8x10in, update
+the `height` on the `<img>` in `resume.html`.
+
 ## The design
 
 The current look comes from Mila Tsvetanova's Figma file, "Nikol Tsvetanova
@@ -106,19 +120,31 @@ Website". Two things about it are worth knowing before you touch the CSS:
 
 - **The font is Zalando Sans, for everything.** It is a variable face
   (weights 200-900), self-hosted from `assets/fonts/zalando-sans.woff2` (the
-  Latin subset, from Google Fonts, SIL OFL) and preloaded on every page. The
-  home page sizes the name (two lines, on every screen) from the width of the
-  picture block, using the font's *measured* ink width (7.7733em for
+  Latin subset, from Google Fonts, SIL OFL) and preloaded on every page. On
+  phones and tablets the home page sizes the name (two lines, on every screen)
+  from the width of the picture block, using the font's *measured* ink width (7.7733em for
   "TSVETANOVA") and its side bearings, so the letters land on the picture
   edges. **If you change the font, re-measure that number** (it is in the
   "Home" section of `assets/css/site.css`) or the name will no longer line up;
   `node tools/strip-test.mjs` fails with "name is as wide as the pictures".
-- **The four home pictures are never cropped.** Each `<li class="strip-slide">`
-  in `index.html` carries its photo's width:height in `--ar`, and the layout is
-  solved from those four ratios (`--home-sum`, `--home-k2`, `--home-c1` in the
-  "Home" section of `assets/css/site.css`, and `2.618544` in the strip rules).
-  **If you swap a home photo, update its `--ar` and those constants**; the test
-  "pictures are shown uncropped" catches a mismatch.
+- **The desktop home is the layout designer's settings** (sent from a
+  1376x833 window): a 72px name, the four pictures cropped to one shape
+  (`--home-ratio`, 276x394) and one size, a 10px gap, and fixed gaps of
+  60/58/34/32/48px down the page, all in the "Home" section of
+  `assets/css/site.css`. The side margin (122px on her window) is `--gutter`
+  on desktop, scaled with the window width, and the gallery, headshots and
+  reel share it. **On phones and tablets the home pictures are never
+  cropped**: each `<li class="strip-slide">` carries its photo's width:height
+  in `--ar`, and the 2x2 block is solved from those ratios (`--home-k2`). If
+  you swap a home photo, update its `--ar`, `--home-k2`, and `2.618544` in
+  `layout-designer.js`; the test "uncropped on phones and tablets" catches a
+  mismatch.
+- **Every picture on the site has the same gap (`--tile-gap`, 10px)**, and in
+  the gallery and headshots every picture is the same height. The gallery
+  mosaic sizes every picture from one portrait column (a column's width over
+  0.672); a landscape spans two columns and comes out at its own shape, so
+  rows line up with no visible cropping. Headshots are that same portrait
+  size.
 - **The home page is exactly one screen tall and cannot scroll**, on every
   device (`overflow: hidden`). The picture block is sized from the screen
   height so the name, pictures, nav and icons always fit; if you add anything
@@ -134,11 +160,14 @@ Website". Two things about it are worth knowing before you touch the CSS:
 
 ## Things that will bite you
 
-- **`/headshots` is a placeholder page, and `.htaccess` no longer redirects
-  it.** The Figma nav names Headshots, so `headshots.html` exists, is `noindex`,
-  and is kept out of `sitemap.xml`. `headshot-01` through `headshot-07` are
-  already optimized and waiting. If Headshots leaves the nav again, restore the
-  `RewriteRule ^headshots(\.html)?$ / [R=301,L]` line.
+- **The headshot files are portraits padded out to landscape with grey**
+  (all but `headshot-03`, a true landscape). The Headshots page crops each
+  back to a portrait, so the grey never shows there, but the lightbox shows
+  the whole file, grey and all. Unpadded originals would fix both.
+- **`/resume` and `/contact` are pages again.** For a while they were 301s to
+  sections of About; those rules are gone from `.htaccess`. A server still
+  carrying the old `.htaccess` sends them to About; `tools/verify-deploy.sh`
+  checks for that.
 - **`assets/img/imdb.png` is not produced by `optimize-images.mjs`.** That
   script emits AVIF/WebP/JPEG, and JPEG would throw away the mark's
   transparency. It was resized once from `_source/images/IMDB.png`; redo it by

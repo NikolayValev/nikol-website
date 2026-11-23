@@ -45,11 +45,10 @@ check "/gallery.html redirects"  "$(code "$HOST/gallery.html")" "301"
 # rather than the old retirement redirect to the home page.
 check "/headshots.html redirects" "$(code "$HOST/headshots.html")" "301"
 check "  -> to"                  "$(loc  "$HOST/headshots.html")" "$HOST/headshots"
-# Resume and Contact were folded into About.
-check "/resume redirects"        "$(code "$HOST/resume")" "301"
-check "  -> to"                  "$(loc  "$HOST/resume")" "$HOST/about#resume"
-check "/contact redirects"       "$(code "$HOST/contact")" "301"
-check "  -> to"                  "$(loc  "$HOST/contact")" "$HOST/about#contact"
+# Resume and Contact are pages again (they were briefly 301s to About), so a
+# stale server .htaccess would show up here as a 301.
+check "/resume is a page"        "$(code "$HOST/resume")" "200"
+check "/contact is a page"       "$(code "$HOST/contact")" "200"
 echo
 
 # 3. The resume PDF. Its 2024 URL may have gone to casting directors.

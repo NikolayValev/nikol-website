@@ -55,16 +55,9 @@
   # spaces. Matching the %20 form would be dead code.
   RewriteRule "^IMAGES/Nikol Tsvetanova Resume\.pdf$" /assets/docs/nikol-tsvetanova-resume.pdf [R=301,L,NE]
 
-  # /headshots was a 301 to the home page while headshots lived there. The
-  # Figma nav names it again, so headshots.html exists and the redirect is
-  # gone: leaving it in would send every visitor who clicks Headshots straight
-  # back to the home page. Restore it if Headshots leaves the nav again.
-
-  # Resume and Contact are sections of the About page now. Their old URLs
-  # land on the matching section. NE keeps the # from being escaped to %23.
-  # Mirrored in tools/serve.mjs.
-  RewriteRule ^resume(\.html)?$ /about#resume [R=301,L,NE]
-  RewriteRule ^contact(\.html)?$ /about#contact [R=301,L,NE]
+  # /headshots, /resume and /contact are pages in the nav. Each used to be a
+  # 301 (to the home page, or to a section of About); those rules are gone, and
+  # leaving any in would send every visitor who clicks the item somewhere else.
 
   # Old .html URLs redirect to the clean form. THE_REQUEST guard means this
   # matches only real browser requests, never the internal rewrite below,

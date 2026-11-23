@@ -8,6 +8,7 @@
 import puppeteer from 'puppeteer';
 
 const base = 'http://localhost:8080';
+const PAGES = ['/', '/about', '/headshots', '/reel', '/resume', '/gallery', '/contact', '/404.html'];
 const b = await puppeteer.launch({ headless: 'new' });
 const out = [];
 const say = (l, ok, d = '') => out.push(`${ok ? 'PASS' : 'FAIL'}  ${l}${d ? '  — ' + d : ''}`);
@@ -35,8 +36,8 @@ say('slides duplicated for a seamless loop', geo.total === 8 && geo.clones === 4
 say('no play/pause control', (await p.$$('.strip-toggle')).length === 0);
 say('no dot indicators', (await p.$$('.strip-dot')).length === 0);
 
-// The landing frames carry the icon row and nothing else — no rule, no
-// copyright, no credits.
+// The landing frames carry the icon row and the copyright under it — no rule,
+// no credits.
 const homeFooter = await p.evaluate(() => {
   const f = document.querySelector('.site-footer');
   if (!f) return null;
@@ -53,9 +54,9 @@ const homeFooter = await p.evaluate(() => {
     rule: getComputedStyle(f).borderTopWidth,
   };
 });
-say('home footer is the icon row only', homeFooter
+say('home footer is the icon row and the copyright', homeFooter
     && homeFooter.socials === 4
-    && !homeFooter.noteShown
+    && homeFooter.noteShown
     && !homeFooter.creditShown
     && homeFooter.rule === '0px',
     JSON.stringify(homeFooter));
@@ -149,7 +150,7 @@ say('mobile does not clone or rotate', block.total === 4 && block.clones === 0,
     `${block.total} slides, ${block.clones} clones`);
 say('mobile is not a sideways scroller', !block.overflows);
 
-// The "+" opens the sheet; the sheet carries all four links and closes again.
+// The "+" opens the sheet; the sheet carries all six links and closes again.
 const sheet = await p.evaluate(() => !!document.querySelector('.nav-toggle')
   && getComputedStyle(document.querySelector('.nav-toggle')).display !== 'none');
 say('mobile shows the + toggle', sheet);
@@ -165,8 +166,8 @@ const opened = await p.evaluate(() => {
     closeShown: getComputedStyle(document.querySelector('.nav-close')).display !== 'none',
   };
 });
-say('+ opens a sheet with all four links', opened.open && opened.visible
-    && opened.links === 4 && opened.expanded === 'true' && opened.closeShown,
+say('+ opens a sheet with all six links', opened.open && opened.visible
+    && opened.links === 6 && opened.expanded === 'true' && opened.closeShown,
     JSON.stringify(opened));
 await p.click('.nav-close');
 await wait(250);
@@ -195,7 +196,7 @@ const noJs = await p.$$eval('.strip-slide img', (els) => els.map((e) => getCompu
 say('no JS: images visible', noJs.every((o) => Number(o) === 1),
     `${noJs.length} images, opacity ${[...new Set(noJs)].join('/')}`);
 const noJsNav = await p.$$eval('.nav-list a', (els) => els.length);
-say('no JS: nav links still reachable', noJsNav === 4, `${noJsNav} links`);
+say('no JS: nav links still reachable', noJsNav === 6, `${noJsNav} links`);
 await p.close();
 
 // --- about: centred prose, no portrait (the comp drops it) ---
@@ -214,50 +215,61 @@ say('about marked current in nav', about.current === 'About', `current: ${about.
 say('about still shows credits', about.credits === 1);
 await p.close();
 
-// --- resume and contact live on About; their old URLs land there ---
+// --- resume and contact are pages of their own again ---
 p = await b.newPage();
 await p.setViewport({ width: 1280, height: 900 });
 await p.goto(base + '/about', { waitUntil: 'networkidle0' });
-const merged = await p.evaluate(() => ({
+const aboutOnly = await p.evaluate(() => ({
   h1: document.querySelectorAll('h1').length,
-  pdf: !!document.querySelector('#resume a[href$="resume.pdf"]'),
-  agency: document.querySelector('#contact')?.textContent.includes('Posche Talent'),
-  email: !!document.querySelector('#contact a[href^="mailto:"]'),
-  order: [...document.querySelectorAll('main > .prose, main section')].map((e) => e.id || 'bio').join(','),
+  details: document.querySelectorAll('#resume, #contact').length,
 }));
-say('about has one h1', merged.h1 === 1);
-say('about carries the resume PDF', merged.pdf);
-say('about carries the agency and agent email', merged.agency && merged.email);
-say('about reads bio, resume, contact', merged.order === 'bio,resume,contact', merged.order);
-for (const [from, hash] of [['/resume', '#resume'], ['/contact', '#contact'], ['/contact.html', '#contact']]) {
-  const res = await p.goto(base + from, { waitUntil: 'networkidle0' });
-  const landed = new URL(p.url());
-  const chain = res.request().redirectChain().map((r) => r.response()?.status());
-  say(`${from} 301s to /about${hash}`, landed.pathname === '/about' && landed.hash === hash && chain[0] === 301, `${chain.join('>')} -> ${landed.pathname}${landed.hash}`);
+say('about has one h1 and is the bio only', aboutOnly.h1 === 1 && aboutOnly.details === 0, JSON.stringify(aboutOnly));
+for (const [u, label, test] of [
+  ['/resume', 'Resume', () => !!document.querySelector('main a[href$="resume.pdf"]') && (() => { const i = document.querySelector('main img.resume-page'); return !!i && i.complete && i.naturalWidth > 0; })()],
+  ['/contact', 'Contact', () => document.querySelector('main').textContent.includes('Posche Talent') && !!document.querySelector('main a[href^="mailto:"]')],
+]) {
+  const res = await p.goto(base + u, { waitUntil: 'domcontentloaded' });
+  const ok = await p.evaluate(test);
+  const m = await p.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent.trim(),
+    current: document.querySelector('[aria-current="page"]')?.textContent.trim(),
+  }));
+  say(`${u} is its own page, marked current, with its content`, res.status() === 200 && res.request().redirectChain().length === 0
+      && m.h1 === label && m.current === label && ok, JSON.stringify({ ...m, ok }));
 }
 await p.close();
 
-// --- the placeholder page is reachable and not indexable ---
+// --- headshots: seven portraits, all one size, rows level ---
 p = await b.newPage();
-await p.goto(base + '/headshots', { waitUntil: 'networkidle0' });
-const hs = await p.evaluate(() => ({
-  status: document.querySelector('h1')?.textContent.trim(),
-  noindex: document.querySelector('meta[name="robots"]')?.content.includes('noindex'),
-}));
-say('headshots placeholder is reachable', hs.status === 'Headshots', `h1: ${hs.status}`);
-say('headshots placeholder is noindex', !!hs.noindex);
+const hsBad = [];
+for (const [w, h] of [[1440, 900], [1024, 768], [390, 844]]) {
+  await p.setViewport({ width: w, height: h });
+  await p.goto(base + '/headshots', { waitUntil: 'networkidle0' });
+  const m = await p.evaluate(() => {
+    const r = [...document.querySelectorAll('.portraits .figure > a')].map((e) => e.getBoundingClientRect());
+    const imgs = [...document.querySelectorAll('.portraits img')].map((e) => e.getBoundingClientRect());
+    return {
+      n: r.length,
+      sizes: [...new Set(r.map((x) => `${Math.round(x.width)}x${Math.round(x.height)}`))],
+      filled: imgs.every((x, i) => Math.abs(x.height - r[i].height) < 1 && Math.abs(x.width - r[i].width) < 1),
+      noindex: !!document.querySelector('meta[name="robots"]'),
+    };
+  });
+  if (m.n !== 7 || m.sizes.length !== 1 || !m.filled || m.noindex) hsBad.push(`${w}: ${JSON.stringify(m)}`);
+}
+say('headshots: seven portraits, all one size, each filling its frame', hsBad.length === 0, hsBad.join(' ; '));
 await p.close();
 
 // --- the Figma nav, on every page ---
 p = await b.newPage();
-const LABELS = ['About', 'Headshots', 'Reel', 'Gallery'];
+const LABELS = ['About', 'Headshots', 'Reel', 'Resume', 'Gallery', 'Contact'];
 let navWrong = [];
-for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
+for (const u of PAGES) {
   await p.goto(base + u, { waitUntil: 'domcontentloaded' });
   const labels = await p.$$eval('.nav-list a', (els) => els.map((a) => a.textContent.trim()));
   if (labels.join('|') !== LABELS.join('|')) navWrong.push(`${u}: ${labels.join(',')}`);
 }
-say('the four nav items on every page', navWrong.length === 0, navWrong.join(' ; '));
+say('the six nav items on every page', navWrong.length === 0, navWrong.join(' ; '));
 await p.close();
 
 // --- home is exactly one screen and does not scroll, on every device ---
@@ -309,12 +321,11 @@ say('name is on two lines on every screen', lines.length === 0, lines.join(' ; '
 
 // --- the name lines up with the pictures ---
 // Phones and tablets: first letter on the block's left edge, last letter on its
-// right edge. Desktop: first letter over the centre of the first picture, last
-// letter over the centre of the last. The name's line box overhangs the letters
-// by the font's side bearings (and trailing tracking), so add those back in.
-// Desktop also has three equal gaps: above the name (screen top to the top of
-// the capitals), below it (baseline to the pictures) — and they match the
-// design token. Measured on text rects (the font's content area): the capitals start 0.24em below a text rect's top and the baseline sits 0.25em above its bottom (in the line box: 0.16em and 0.17em).
+// right edge. The name's line box overhangs the letters by the font's side
+// bearings (and trailing tracking), so add those back in. Desktop (the layout
+// designer's settings): the name is 72px, centred over the row, 60px from the
+// top of the screen to the capitals and 58px from the baseline to the
+// pictures. Measured on text rects (the font's content area): the capitals start 0.24em below a text rect's top and the baseline sits 0.25em above its bottom (in the line box: 0.16em and 0.17em).
 const flush = [];
 for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [390, 844], [375, 667]]) {
   await p.setViewport({ width: w, height: h });
@@ -333,13 +344,8 @@ for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820,
       r.selectNodeContents(n);
       rects.push(...[...r.getClientRects()].filter((x) => x.width > 0));
     }
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--home-gap,0px)';
-    document.body.appendChild(probe);
-    const gapPx = probe.getBoundingClientRect().height;
-    probe.remove();
     return {
-      strip: [t.left, t.right, t.top], slides: slides.map((x) => [x.left, x.right]), fs, gapPx,
+      strip: [t.left, t.right, t.top], slides: slides.map((x) => [x.left, x.right]), fs,
       line: [Math.min(...rects.map((x) => x.left)), Math.max(...rects.map((x) => x.right))],
       top: Math.min(...rects.map((x) => x.top)), bottom: Math.max(...rects.map((x) => x.bottom)),
       desktop: matchMedia('(min-width: 64em)').matches,
@@ -347,45 +353,63 @@ for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [820,
   });
   const left = m.line[0] + 0.02 * m.fs, right = m.line[1] - 0.173 * m.fs;
   const first = m.slides[0], last = m.slides[m.slides.length - 1];
-  const wantL = m.desktop ? (first[0] + first[1]) / 2 : m.strip[0];
-  const wantR = m.desktop ? (last[0] + last[1]) / 2 : m.strip[1];
-  if (Math.abs(left - wantL) > 3 || Math.abs(right - wantR) > 3) {
-    flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, want ${Math.round(wantL)}-${Math.round(wantR)}`);
+  if (!m.desktop && (Math.abs(left - m.strip[0]) > 3 || Math.abs(right - m.strip[1]) > 3)) {
+    flush.push(`${w}x${h}: name ${Math.round(left)}-${Math.round(right)}, want ${Math.round(m.strip[0])}-${Math.round(m.strip[1])}`);
   }
   if (m.desktop) {
+    const rowMid = (first[0] + last[1]) / 2, nameMid = (left + right) / 2;
     const above = m.top + 0.24 * m.fs, below = m.strip[2] - (m.bottom - 0.25 * m.fs);
-    if (Math.abs(above - below) > 3 || Math.abs(above - m.gapPx) > 3) {
-      flush.push(`${w}x${h}: gap above ${above.toFixed(1)}, below ${below.toFixed(1)}, token ${m.gapPx.toFixed(1)}`);
+    if (Math.abs(m.fs - 72) > 0.5 || Math.abs(nameMid - rowMid) > 3 || Math.abs(above - 60) > 3 || Math.abs(below - 58) > 3) {
+      flush.push(`${w}x${h}: ${m.fs}px, centre ${nameMid.toFixed(1)} vs row ${rowMid.toFixed(1)}, gap above ${above.toFixed(1)}, below ${below.toFixed(1)}`);
     }
   }
 }
-say('name lines up with the pictures; equal gaps above and below it', flush.length === 0, flush.join(' ; '));
+say("name lines up with the pictures; the designer's gaps above and below it", flush.length === 0, flush.join(' ; '));
 
-// --- nothing is cropped, and the space under the icons is small ---
-// Every picture is shown at its own proportions (displayed width:height equals
-// the file's), and the page does not leave a band of empty cream below the icon
-// row: the icons end within 40px of the bottom of the screen.
+// --- picture shapes, and no wasted screen ---
+// Phones and tablets: every picture at its own proportions (displayed
+// width:height equals the file's). Desktop: all four one size, at the
+// designer's 276x394 shape, and the row is as wide as the side margins allow
+// unless the screen's height stops it, in which case the page fills the screen.
+// Phones and tablets do not leave a band of empty cream under the copyright.
 const crop = [], gapBottom = [];
 for (const [w, h] of [[1920, 1080], [1440, 900], [1366, 768], [1280, 720], [1024, 768], [820, 1180], [768, 1024], [390, 844], [375, 667]]) {
   await p.setViewport({ width: w, height: h });
   await p.goto(base + '/', { waitUntil: 'networkidle0' });
-  const m = await p.evaluate(() => ({
-    off: Math.max(...[...document.querySelectorAll('.strip-slide:not([aria-hidden="true"]) img')].map((i) => {
-      const r = i.getBoundingClientRect();
-      return Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) / (i.naturalWidth / i.naturalHeight);
-    })),
-    below: innerHeight - document.querySelector('.socials').getBoundingClientRect().bottom,
-  }));
-  if (m.off > 0.01) crop.push(`${w}x${h}: ${(m.off * 100).toFixed(1)}% off`);
-  if (m.below > 40) gapBottom.push(`${w}x${h}: ${Math.round(m.below)}px below the icons`);
+  const m = await p.evaluate(() => {
+    const slides = [...document.querySelectorAll('.strip-slide:not([aria-hidden="true"])')].map((e) => e.getBoundingClientRect());
+    const px = (v) => { const d = document.createElement('div'); d.style.cssText = 'position:absolute;visibility:hidden;height:' + v; document.body.appendChild(d); const x = d.getBoundingClientRect().height; d.remove(); return x; };
+    return {
+      desktop: matchMedia('(min-width: 64em)').matches,
+      off: Math.max(...[...document.querySelectorAll('.strip-slide:not([aria-hidden="true"]) img')].map((i) => {
+        const r = i.getBoundingClientRect();
+        return Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) / (i.naturalWidth / i.naturalHeight);
+      })),
+      sizes: [...new Set(slides.map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`))],
+      shape: slides[0].width / slides[0].height,
+      row: slides[slides.length - 1].right - slides[0].left,
+      room: document.documentElement.clientWidth - 2 * px('var(--gutter)'),
+      below: innerHeight - document.querySelector('.footer-note').getBoundingClientRect().bottom,
+      icons: innerHeight - document.querySelector('.socials').getBoundingClientRect().bottom,
+    };
+  });
+  if (m.desktop) {
+    if (m.sizes.length !== 1 || Math.abs(m.shape - 276 / 394) > 0.01) crop.push(`${w}x${h}: ${m.sizes.join(' ')}`);
+    if (m.row < m.room - 2 && m.icons > 48 + 12) gapBottom.push(`${w}x${h}: row ${Math.round(m.row)} of ${Math.round(m.room)}, ${Math.round(m.icons)}px below the icons`);
+  } else {
+    if (m.off > 0.01) crop.push(`${w}x${h}: ${(m.off * 100).toFixed(1)}% off`);
+    if (m.below > 40) gapBottom.push(`${w}x${h}: ${Math.round(m.below)}px below the copyright`);
+  }
 }
-say('pictures are shown uncropped, at their own proportions', crop.length === 0, crop.join(' ; '));
-say('little space below the icon row', gapBottom.length === 0, gapBottom.join(' ; '));
+say('pictures: one size and shape on desktop, uncropped on phones and tablets', crop.length === 0, crop.join(' ; '));
+say('no wasted screen: the row reaches the side margins, or the page fills the height', gapBottom.length === 0, gapBottom.join(' ; '));
 
 // --- one gap between pictures, one side margin ---
-// The gallery's gap between pictures is the home row's gap; the gallery's side
-// margin is the page's (--gutter), and on a phone the home block's too. The
-// gallery's narrow pictures are as tall as the wide ones beside them.
+// The gap between pictures is the same on the home row, the gallery and the
+// headshots. The gallery, headshots and reel all stop at the page's side
+// margin (--gutter), which on desktop is also the home row's smallest margin
+// and on a phone the home block's. Every gallery picture is the same height,
+// all portraits one width and all landscapes another.
 const same = [];
 for (const [w, h] of [[1440, 900], [1024, 768], [820, 1180], [390, 1000]]) {
   await p.setViewport({ width: w, height: h });
@@ -404,19 +428,34 @@ for (const [w, h] of [[1440, 900], [1024, 768], [820, 1180], [390, 1000]]) {
     const rows = {};
     imgs.forEach((r) => { const k = Math.round(r.top); (rows[k] = rows[k] || []).push(r.bottom); });
     const ragged = Object.values(rows).filter((b) => Math.max(...b) - Math.min(...b) > 1.5).length;
+    const heights = new Set(imgs.map((r) => Math.round(r.height))).size;
+    const widths = new Set(imgs.map((r) => Math.round(r.width))).size;
     const cs = getComputedStyle(document.querySelector('.mosaic'));
-    return { gap: parseFloat(cs.columnGap), rowGap: parseFloat(cs.rowGap), left: mos.left, right: innerWidth - mos.right, ragged };
+    return { gap: parseFloat(cs.columnGap), rowGap: parseFloat(cs.rowGap), left: mos.left, right: document.documentElement.clientWidth - mos.right, ragged, heights, widths };
   });
+  const others = {};
+  for (const [u, sel] of [['/headshots', '.portraits'], ['/reel', '.facade']]) {
+    await p.goto(base + u, { waitUntil: 'networkidle0' });
+    others[u] = await p.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      const r = el.getBoundingClientRect();
+      return { left: r.left, right: document.documentElement.clientWidth - r.right, gap: parseFloat(getComputedStyle(el).columnGap) };
+    }, sel);
+  }
   if (Math.abs(home.gap - gal.gap) > 0.5 || Math.abs(home.gap - gal.rowGap) > 0.5) same.push(`${w}: home gap ${home.gap.toFixed(1)}, gallery ${gal.gap.toFixed(1)} across / ${gal.rowGap.toFixed(1)} down`);
   if (Math.abs(gal.left - home.gutter) > 1 || Math.abs(gal.right - home.gutter) > 1) same.push(`${w}: gallery sides ${gal.left.toFixed(1)}/${gal.right.toFixed(1)}, gutter ${home.gutter.toFixed(1)}`);
   if (w === 390 && Math.abs(home.left - home.gutter) > 1) same.push(`${w}: home side ${home.left.toFixed(1)}, gutter ${home.gutter.toFixed(1)}`);
-  if (w >= 768 && gal.ragged) same.push(`${w}: ${gal.ragged} gallery rows with uneven picture heights`);
+  if (gal.ragged || gal.heights !== 1 || gal.widths !== 2) same.push(`${w}: gallery ${gal.ragged} ragged rows, ${gal.heights} heights, ${gal.widths} widths`);
+  if (Math.abs(others['/headshots'].gap - home.gap) > 0.5) same.push(`${w}: headshots gap ${others['/headshots'].gap}`);
+  for (const [u, o] of Object.entries(others)) {
+    if (Math.abs(o.left - home.gutter) > 1 || Math.abs(o.right - home.gutter) > 1) same.push(`${w}: ${u} sides ${o.left.toFixed(1)}/${o.right.toFixed(1)}, gutter ${home.gutter.toFixed(1)}`);
+  }
 }
-say('gallery and home share one gap and one side margin; gallery rows line up', same.length === 0, same.join(' ; '));
+say('one gap and one side margin on home, gallery, headshots and reel; gallery pictures all one height', same.length === 0, same.join(' ; '));
 
 // --- Actors Access is in every footer ---
 const aa = [];
-for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
+for (const u of PAGES) {
   await p.goto(base + u, { waitUntil: 'domcontentloaded' });
   const ok = await p.evaluate(() => {
     const a = document.querySelector('.site-footer a[href="https://resumes.actorsaccess.com/nikoltsvetanova"]');
@@ -448,7 +487,7 @@ say('tablet home is the 2x2 block with "+", and fits the screen', tab.length ===
 // --- one font for everything ---
 await p.setViewport({ width: 1280, height: 900 });
 const fonts = [];
-for (const u of ['/', '/about', '/headshots', '/reel', '/gallery', '/404.html']) {
+for (const u of PAGES) {
   await p.goto(base + u, { waitUntil: 'networkidle0' });
   const m = await p.evaluate(async () => {
     await document.fonts.ready;

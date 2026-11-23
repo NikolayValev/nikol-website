@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- noindex while this is a placeholder: the nav item is real, the page is not
-     yet. It is deliberately absent from sitemap.xml for the same reason. -->
-<meta name="robots" content="noindex">
 <title>Nikol Tsvetanova — Headshots</title>
 <meta name="description" content="Headshots for Nikol Tsvetanova, actor, New York City.">
 <link rel="canonical" href="https://nikoltsvetanova.com/headshots">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nikol Tsvetanova">
+<meta property="og:title" content="Nikol Tsvetanova — Headshots">
+<meta property="og:description" content="Headshots for Nikol Tsvetanova, actor, New York City.">
+<meta property="og:url" content="https://nikoltsvetanova.com/headshots">
+<meta property="og:image" content="https://nikoltsvetanova.com/assets/img/headshot-01-2400.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <script>document.documentElement.classList.remove('no-js')</script>
 <link rel="preload" href="/assets/fonts/zalando-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/site.css">
@@ -38,31 +42,100 @@
     <li><a href="/about">About</a></li>
     <li><a href="/headshots" aria-current="page">Headshots</a></li>
     <li><a href="/reel">Reel</a></li>
+    <li><a href="/resume">Resume</a></li>
     <li><a href="/gallery">Gallery</a></li>
+    <li><a href="/contact">Contact</a></li>
   </ul>
   <button class="nav-close" type="button">
     <span aria-hidden="true">&times;</span><span class="visually-hidden">Close menu</span>
   </button>
 </nav>
 
-<!-- PLACEHOLDER. The Figma names Headshots in the nav but draws no page for
-     it, so nothing here is invented. The pictures are ready when the design
-     is: headshot-01 through headshot-07 are already optimized in assets/img
-     at 640/1280/2400 (headshot-03 tops out at 2114 — check
-     _source/image-manifest.json before writing any srcset).
-     Either drop the designed layout in here, or take Headshots out of the nav
-     on all seven pages and restore the /headshots -> / redirect in .htaccess. -->
 <main id="main" tabindex="-1" class="wrap wrap-wide">
+  <!-- The comps show no page title on the inner pages — the current nav item
+       carries that job. The heading stays for document structure. -->
   <h1 class="visually-hidden">Headshots</h1>
 
-  <div class="prose" style="margin-block-start: var(--space-3xl)">
-    <p>Headshots are on their way. In the meantime, there are pictures on the <a href="/">home page</a> and in the <a href="/gallery">gallery</a>.</p>
+  <!-- The headshot files are portraits padded out to landscape with grey
+       (except headshot-03, a true landscape). .portraits crops each to the
+       same portrait shape, so the grey never shows on the page. The sizes
+       attribute allows for that: the image is drawn about twice as wide as
+       its cell. headshot-03 tops out at 2114 (_source/image-manifest.json). -->
+  <div class="portraits reveal" style="margin-block-start: var(--space-2xl)">
+    <figure class="figure">
+      <a href="/assets/img/headshot-01-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in a white ruffled top against a warm tan backdrop, long dark hair with bangs, a soft, level gaze.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-01-640.avif 640w, /assets/img/headshot-01-1280.avif 1280w, /assets/img/headshot-01-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-01-640.webp 640w, /assets/img/headshot-01-1280.webp 1280w, /assets/img/headshot-01-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-01-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova in a white ruffled top against a warm tan backdrop, long dark hair with bangs, a soft, level gaze." fetchpriority="high" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-02-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in a black leather jacket over a black top against a slate-grey backdrop, a steady, serious look.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-02-640.avif 640w, /assets/img/headshot-02-1280.avif 1280w, /assets/img/headshot-02-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-02-640.webp 640w, /assets/img/headshot-02-1280.webp 1280w, /assets/img/headshot-02-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-02-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova in a black leather jacket over a black top against a slate-grey backdrop, a steady, serious look." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-03-2114.jpg" data-lightbox data-alt="Nikol Tsvetanova smiling broadly in a light blue cardigan against a mottled amber backdrop, hair swept to one side.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-03-640.avif 640w, /assets/img/headshot-03-1280.avif 1280w, /assets/img/headshot-03-2114.avif 2114w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-03-640.webp 640w, /assets/img/headshot-03-1280.webp 1280w, /assets/img/headshot-03-2114.webp 2114w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-03-1280.jpg" width="2114" height="1580" alt="Nikol Tsvetanova smiling broadly in a light blue cardigan against a mottled amber backdrop, hair swept to one side." loading="lazy" decoding="async" style="object-position: 37% 50%">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-04-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in a black plunging top and red lipstick against a pale lilac-grey backdrop, an even, direct gaze.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-04-640.avif 640w, /assets/img/headshot-04-1280.avif 1280w, /assets/img/headshot-04-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-04-640.webp 640w, /assets/img/headshot-04-1280.webp 1280w, /assets/img/headshot-04-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-04-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova in a black plunging top and red lipstick against a pale lilac-grey backdrop, an even, direct gaze." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-05-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in a denim jacket over a white top against an olive-green backdrop, a quiet half-smile.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-05-640.avif 640w, /assets/img/headshot-05-1280.avif 1280w, /assets/img/headshot-05-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-05-640.webp 640w, /assets/img/headshot-05-1280.webp 1280w, /assets/img/headshot-05-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-05-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova in a denim jacket over a white top against an olive-green backdrop, a quiet half-smile." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-06-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova in a black camisole against a deep navy backdrop, chin slightly lowered, an unguarded look.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-06-640.avif 640w, /assets/img/headshot-06-1280.avif 1280w, /assets/img/headshot-06-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-06-640.webp 640w, /assets/img/headshot-06-1280.webp 1280w, /assets/img/headshot-06-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-06-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova in a black camisole against a deep navy backdrop, chin slightly lowered, an unguarded look." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
+
+    <figure class="figure">
+      <a href="/assets/img/headshot-07-2400.jpg" data-lightbox data-alt="Nikol Tsvetanova smiling in a bright blue off-the-shoulder top against a pale blue backdrop, hair pulled back with bangs.">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/headshot-07-640.avif 640w, /assets/img/headshot-07-1280.avif 1280w, /assets/img/headshot-07-2400.avif 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/headshot-07-640.webp 640w, /assets/img/headshot-07-1280.webp 1280w, /assets/img/headshot-07-2400.webp 2400w" sizes="(min-width: 64em) 45vw, 100vw">
+          <img src="/assets/img/headshot-07-1280.jpg" width="5075" height="3792" alt="Nikol Tsvetanova smiling in a bright blue off-the-shoulder top against a pale blue backdrop, hair pulled back with bangs." loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </figure>
   </div>
 </main>
 
 <footer class="site-footer wrap">
   <div class="footer-inner">
-    <p class="footer-note">&copy; 2026 Nikol Tsvetanova</p>
     <ul class="socials">
       <li>
         <a href="https://www.instagram.com/nikoltsve/" target="_blank" rel="noopener">
@@ -99,6 +172,7 @@
       Design by <a href="https://milatsvetanova.com">Mila Tsvetanova</a>.
       Headshots by <a href="https://osberphotos.com">Jessica Osber Photography</a>.
     </p>
+    <p class="footer-note">&copy; 2026 Nikol Tsvetanova</p>
   </div>
 </footer>
 

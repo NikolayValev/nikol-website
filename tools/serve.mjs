@@ -43,13 +43,9 @@ async function resolveFile(pathname) {
   return null;
 }
 
-// The 301s in .htaccess that local behaviour depends on.
-const REDIRECTS = {
-  '/resume': '/about#resume',
-  '/resume.html': '/about#resume',
-  '/contact': '/about#contact',
-  '/contact.html': '/about#contact',
-};
+// The 301s in .htaccess that local behaviour depends on (none at present:
+// /resume and /contact are pages again).
+const REDIRECTS = {};
 
 createServer(async (req, res) => {
   const { pathname } = new URL(req.url, `http://localhost:${PORT}`);

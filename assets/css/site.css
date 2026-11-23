@@ -49,8 +49,10 @@
   --space-3xl: clamp(6rem, 5.06rem + 4.69vw, 9.5rem);
 
   /* One gap between pictures, everywhere: the home row, the gallery, the
-     headshots. And one smallest side margin for the page and for pictures. */
-  --tile-gap: var(--space-2xs);
+     headshots. A fixed 10px, the designer's number, so it is the same on
+     every page and every screen. And one smallest side margin for the page
+     and for pictures (widened on desktop, below). */
+  --tile-gap: 0.625rem;
   --gutter: var(--space-s);
 
   /* The comps centre their prose in a column narrower than the page. */
@@ -59,6 +61,13 @@
      side. The wordmark, the picture strip, the nav and the footer rule all
      line up on it. */
   --content: 82rem;
+}
+
+/* Desktop side margin, from the layout designer: 122px on her 1376px-wide
+   window, kept in that proportion on other desktop widths. The home row, the
+   gallery, the headshots and the reel all stop at it. */
+@media (min-width: 64em) {
+  :root { --gutter: calc(122 / 1376 * 100vw); }
 }
 
 /* Latin subset of Zalando Sans (SIL OFL), from Google Fonts. The index pages
@@ -211,7 +220,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   display: block;
   padding: var(--space-2xs) 0;
   color: var(--ink-muted);
-  font-size: var(--step-1);
+  /* Smaller than the comps' step-1, at the designer's request. */
+  font-size: var(--step--1);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   text-decoration: none;
@@ -264,7 +274,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   .nav-list[data-open="true"] { display: flex; }
 
   .nav-list a {
-    font-size: var(--step-2);
+    font-size: var(--step-1);
     text-align: center;
   }
 
@@ -289,17 +299,17 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
   border-block-start: 1px solid var(--line);
 }
 
-/* Copyright ranged left, icons centred on the page — so the icon row is the
-   grid's middle column and the notice sits in the first. */
+/* One centred column: icons, then credits, then the copyright at the very
+   bottom (source order is the same). */
 .footer-inner {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-s);
+  text-align: center;
 }
 
 .footer-note {
-  grid-column: 1;
+  margin-block-start: var(--space-s);
   font-size: var(--step--2);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -307,7 +317,6 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 }
 
 .socials {
-  grid-column: 2;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -346,27 +355,17 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18e
 }
 
 .footer-credit {
-  grid-column: 1 / -1;
   margin-block-start: var(--space-m);
   text-align: center;
   font-size: var(--step--2);
   color: var(--ink-muted);
 }
 
-@media (max-width: 47.999em) {
-  .footer-inner { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .footer-note, .socials { grid-column: 1; }
-  .footer-note { order: 2; }
-  .socials { order: 1; }
-  /* Stacked, the small print reads last: icons, copyright, then credits. */
-  .footer-credit { order: 3; margin-block-start: var(--space-2xs); }
-}
-
 /* ---------- Home ---------- */
 /* The home page is exactly one screen tall and does not scroll, on every
    device. Everything on it is sized from the screen: --home-w, below, is the
-   width of the picture block, and the name and the pictures are both derived
-   from it. Order differs by breakpoint. On desktop the nav sits *under* the
+   width of the picture block. On phones and tablets the name and the pictures
+   are both derived from it; on desktop the name is a fixed size. Order differs by breakpoint. On desktop the nav sits *under* the
    pictures (comps "Landing Page"); under 1024px the "+" sits between the name
    and the pictures (comp "iPhone 14 & 15 Pro Max - 1"). Same markup, same
    source order for the keyboard — only the desktop nav moves. */
@@ -377,17 +376,12 @@ html:has(.is-home) { overflow: hidden; }
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  /* The four pictures' width:height ratios (the --ar on each slide in
-     index.html): 3209/4971, 3308/5232, 2896/4765, 3648/4977. */
-  --home-sum: 2.618544;
-  /* Phones and tablets stack them 2x2, two to a row, and a row of two is as
-     tall as its width over the two ratios added: 1/1.277807 + 1/1.340737 =
-     1.528427 widths of height for the two rows. */
+  /* Phones and tablets show the four pictures uncropped, 2x2, from their
+     width:height ratios (the --ar on each slide in index.html): 3209/4971,
+     3308/5232, 2896/4765, 3648/4977. A row of two is as tall as its width
+     over the two ratios added: 1/1.277807 + 1/1.340737 = 1.528427 widths of
+     height for the two rows. */
   --home-k2: 1.528427;
-  /* How much of the row the name is short of the pictures, desktop: the name
-     runs from the middle of the first picture to the middle of the last, so it
-     is short of the row by half of each: (ar1 + ar4) / (2 x sum). */
-  --home-c1: 0.26323;
   /* Height of the two-line name per unit of its width: 2 lines x line-height
      1.05, over 7.7733em, the measured ink width of "TSVETANOVA" in Zalando
      Sans at weight 300 with 0.16em tracking. */
@@ -399,8 +393,10 @@ html:has(.is-home) { overflow: hidden; }
      shrinks the block rather than clipping the nav. */
   --home-other: calc(
     var(--space-xl) + var(--space-l) + var(--step-3) + var(--space-2xs) * 2 +
-    var(--space-m) + 1.5rem + var(--space-s) + 1.75rem
+    var(--space-m) + 1.5rem + var(--space-s) + 1.75rem + var(--home-note)
   );
+  /* The copyright line under the icons: 1rem of space, then a 1rem line. */
+  --home-note: 2rem;
   --home-fit: calc(
     (100svh - var(--home-other) + var(--tile-gap) * var(--home-k2) - var(--tile-gap)) /
     (var(--home-name) + var(--home-k2))
@@ -426,48 +422,57 @@ html:has(.is-home) { overflow: hidden; }
   margin-inline: -0.02em -0.173em;
 }
 
-/* The home frames carry only the icon row — no rule, no copyright. */
+/* The home frames carry the icon row and the copyright under it — no rule,
+   no credits. */
 .is-home .site-footer {
   margin-block-start: var(--space-m);
   padding-block-end: var(--space-s);
   border-block-start: 0;
 }
-.is-home .footer-note,
 .is-home .footer-credit { display: none; }
-.is-home .socials { grid-column: 1 / -1; }
+.is-home .footer-note {
+  margin-block-start: calc(var(--home-note) / 2);
+  line-height: calc(var(--home-note) / 2);
+}
 
 @media (min-width: 64em) {
-  /* Desktop: four pictures in a row, the nav underneath. The name runs from the
-     centre of the first picture to the centre of the last, so it is narrower
-     than the row by half of each of those two pictures. Three
-     equal gaps frame it: above the name, below it, and (so the same) between it
-     and the pictures. --home-gap is the visible gap, cap-top to the top of the
-     screen and baseline to the pictures; the margins below take off the font's
-     own space above the capitals (0.16em) and below the baseline (0.17em). */
+  /* Desktop: the layout designer's settings (window 1376x833). Four pictures
+     in a row, all cropped to one shape and so one size, the nav underneath.
+     The name is a fixed 72px, centred over the row (the centre of the first
+     picture to the centre of the last is the row's own centre, since the
+     pictures are all one width). Her gaps, as she measured them:
+       60  screen top to the top of the capitals
+       58  baseline to the pictures
+       34  pictures to the nav
+       32  nav to the icons
+       48  icons to the bottom of the screen (the copyright sits in it)
+     The margins below take off the font's own space above the capitals
+     (0.16em) and below the baseline (0.17em). */
   .is-home {
-    --home-gap: var(--space-xl);
+    --home-gap-top: 3.75rem;
+    --home-gap: 3.625rem;
+    --home-nav-gap: 2.125rem;
+    --home-footer-gap: 2rem;
+    --home-bottom: 3rem;
     --home-side: var(--gutter);
-    --home-nav-gap: min(var(--space-2xl), 5vh);
-    --home-footer-gap: var(--space-s);
-    --home-bottom: var(--space-s);
-    /* The name's line box less the 0.33em the margins below take back from it
-       (0.16em above the capitals, 0.17em under the baseline). */
-    --home-name: calc((2 * 1.05 - 0.33) / 7.7733);
+    --home-title: var(--step-4);
+    /* Width : height of every picture. Her export reads 0.9, but the pictures
+       she measured and sent were 276x394, which is this, and only 394-tall
+       pictures fill her 833px screen with the gaps above. */
+    --home-ratio: 0.7005;
+    /* Everything but the pictures: the gaps, the name's ink (2 lines x 1.05,
+       less the 0.33em the margins take back), the nav row, the icons. */
     --home-other: calc(
-      2 * var(--home-gap) +
-      var(--home-nav-gap) + var(--step-1) * 1.6 + var(--space-2xs) * 2 +
+      var(--home-gap-top) + var(--home-gap) + 1.77 * var(--home-title) +
+      var(--home-nav-gap) + var(--step--1) * 1.6 + var(--space-2xs) * 2 +
       var(--home-footer-gap) + 1.5rem + var(--home-bottom) +
       0.25rem
     );
-    /* The name's ink is the row less c1 of (row - 3 gaps); its height is
-       home-name x that. The pictures' common height is (row - 3 gaps) / sum.
-       Set the total equal to the screen and solve for the row width. This is
-       what keeps the page one screen tall; the sides are whatever it leaves,
-       down to --home-side. */
-    --home-fit: calc(
-      (100vh - var(--home-other) + 3 * var(--tile-gap) * (var(--home-c1) * var(--home-name) + 1 / var(--home-sum))) /
-      ((1 - var(--home-c1)) * var(--home-name) + 1 / var(--home-sum))
-    );
+    /* The pictures are (row - 3 gaps) / 4 wide and that over the ratio tall.
+       Make them as tall as the screen leaves and solve for the row. The row
+       is that, or whatever the side margins allow if that is narrower — on
+       her screen both come to 1132px. */
+    --home-fit: calc(4 * var(--home-ratio) * (100vh - var(--home-other)) + 3 * var(--tile-gap));
     --home-w: min(
       100% - (2 * var(--home-side)),
       max(var(--home-fit), 20rem)
@@ -475,27 +480,23 @@ html:has(.is-home) { overflow: hidden; }
   }
   .is-home > .site-header { padding-block-start: 0; }
   .is-home .display {
-    font-size: calc(((1 - var(--home-c1)) * 100cqw + 3 * var(--home-c1) * var(--tile-gap)) / 7.7733);
-    /* Centred between the middle of the first picture and the middle of the
-       last. Those are not symmetric about the row's centre (the last picture is
-       wider than the first), so nudge by (w1 - w4) / 4. */
-    translate: calc((100cqw - 3 * var(--tile-gap)) * -0.008348) 0;
-    margin-block: calc(var(--home-gap) - 0.16em) calc(var(--home-gap) - 0.17em);
+    font-size: var(--home-title);
+    margin-block: calc(var(--home-gap-top) - 0.16em) calc(var(--home-gap) - 0.17em);
   }
   .is-home > main { order: 2; }
   .is-home > .site-nav { order: 3; margin-block-start: var(--home-nav-gap); }
   .is-home .site-footer {
     margin-block-start: 0;
-    padding-block: var(--home-footer-gap) var(--home-bottom);
+    padding-block: var(--home-footer-gap) calc(var(--home-bottom) - var(--home-note));
   }
 }
 
 /* ---------- Picture strip (home) ---------- */
-/* Four portraits at their own proportions, nothing cropped: each <li> carries
-   its photo's width:height in --ar (see index.html), and the four are laid out
-   to one common height, so they are slightly different widths. A single row on
-   desktop, a 2x2 block on phones and tablets (two to a row, each row sharing a
-   height). From 64em the row also rotates (see site.js); the 2x2 block does not,
+/* Phones and tablets: a 2x2 block of four portraits at their own
+   proportions, nothing cropped. Each <li> carries its photo's width:height in
+   --ar (see index.html), and each row of two shares one height, so they are
+   slightly different widths. Desktop: a single row of four, all cropped to one
+   shape (the designer's choice; see "Home"). From 64em the row also rotates (see site.js); the 2x2 block does not,
    because a rotating grid reads as a shuffle, not a strip. */
 .strip { position: relative; }
 
@@ -531,12 +532,18 @@ html:has(.is-home) { overflow: hidden; }
   .strip-track::-webkit-scrollbar { display: none; }
   .strip-track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
-  /* Four across. The clones site.js appends sit beyond the fourth and are
-     scrolled into view one at a time, so widths are fixed rather than grown:
-     the row less three gaps, shared out by ratio. 2.618544 is the four ratios
-     added up (--home-sum on .is-home); change a photo and it changes too. */
+  /* Four across, all one size: the row less three gaps, in quarters, at the
+     one shape (--home-ratio, on .is-home), each photo cropped to fill it. The
+     clones site.js appends sit beyond the fourth and are scrolled into view
+     one at a time. */
   .strip-slide {
-    flex: 0 0 calc((100% - (3 * var(--tile-gap))) * var(--ar) / 2.618544);
+    flex: 0 0 calc((100% - (3 * var(--tile-gap))) / 4);
+    aspect-ratio: var(--home-ratio);
+  }
+  .strip-slide img {
+    object-fit: cover;
+    /* Above centre, where the faces are. */
+    object-position: 50% 35%;
   }
 }
 
@@ -571,32 +578,60 @@ html:has(.is-home) { overflow: hidden; }
 
 .grid-gallery.is-wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); }
 
-/* Mosaic: the wide/narrow rhythm of the Gallery frames. Four columns, most
-   images spanning two, a few spanning one. The two aspect ratios are chosen so
-   a wide pair and a narrow trio come out the same height and the rows line up. */
+/* Mosaic: the wide/narrow rhythm of the Gallery frames, with every picture
+   the same height. Four columns (two on phones): a portrait takes one, a
+   landscape two. Every picture is exactly one portrait-column's height —
+   a column's width over 0.672, the portraits' own shape — and a landscape,
+   two columns and a gap across at that height, comes out at its own shape
+   (1.338) to within half a percent. So nothing is noticeably cropped, all
+   portraits are one width, all landscapes another, and every row's tops and
+   bottoms line up. The height is a length, not a ratio, so a caption under a
+   picture can never stretch or shrink it. --pic-h is resolved on each
+   picture, where 100cqw is the mosaic's width. */
 .mosaic {
+  container-type: inline-size;
+  --cols: 4;
+  --pic-h: calc((100cqw - (var(--cols) - 1) * var(--tile-gap)) / var(--cols) / 0.672);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   gap: var(--tile-gap);
 }
 .mosaic .figure { grid-column: span 2; }
 .mosaic .figure.is-narrow { grid-column: span 1; }
-.mosaic .figure > a { display: block; aspect-ratio: 3 / 2; }
-/* A narrow picture is as tall as the wide one beside it, whatever the gap is
-   between them (a wide picture is two columns and a gap across, so no fixed
-   ratio on the narrow one can match it): it fills the row's height instead. */
-.mosaic .figure.is-narrow { display: flex; flex-direction: column; }
-.mosaic .figure.is-narrow > a { flex: 1; aspect-ratio: auto; min-height: 0; }
-.mosaic .figure img { width: 100%; height: 100%; object-fit: cover; }
+.mosaic .figure > a { display: block; height: var(--pic-h); }
+.mosaic .figure picture,
+.mosaic .figure img { width: 100%; height: 100%; }
+.mosaic .figure img { object-fit: cover; }
 
 @media (max-width: 47.99em) {
   .mosaic {
-    grid-template-columns: repeat(2, 1fr);
+    --cols: 2;
     grid-auto-flow: dense;          /* keep a lone narrow image company */
   }
-  .mosaic .figure > a { aspect-ratio: 4 / 3; }
-  .mosaic .figure.is-narrow { display: block; }
-  .mosaic .figure.is-narrow > a { flex: none; aspect-ratio: 3 / 4; }
+}
+
+/* Headshots: all portraits, all one size — the same size as a portrait in
+   the gallery mosaic. Four to a row (two on phones), a short last row
+   centred. */
+.portraits {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tile-gap);
+  --cols: 4;
+}
+.portraits .figure {
+  flex: 0 0 calc((100% - (var(--cols) - 1) * var(--tile-gap)) / var(--cols));
+}
+.portraits .figure > a { display: block; aspect-ratio: 0.672; }
+/* The headshot files are portraits padded out to landscape with grey; the
+   crop takes exactly the portrait back out. */
+.portraits .figure picture,
+.portraits .figure img { width: 100%; height: 100%; }
+.portraits .figure img { object-fit: cover; }
+
+@media (max-width: 47.99em) {
+  .portraits { --cols: 2; }
 }
 
 .figure { margin: 0; }
@@ -640,41 +675,28 @@ html:has(.is-home) { overflow: hidden; }
 
 .is-grayscale img { filter: grayscale(1); }
 
-/* ---------- About: bio, then the details row ---------- */
-/* The bio is the page. Resume and Contact sit under it as small print — one
-   hairline, then two short columns labelled in the nav's own uppercase — so
-   they read as details of the bio rather than as pages stacked below it. */
+/* ---------- About, Resume, Contact ---------- */
 .about-bio {
   max-width: 40rem;
   margin-block-start: var(--space-2xl);
   line-height: 1.75;
 }
 
-.about-details {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-l);
-  max-width: 40rem;
+.contact {
+  margin-block-start: var(--space-2xl);
+  line-height: 1.75;
+}
+
+/* The résumé is shown as an image of its page (8x10in), no viewer around it,
+   with the PDF link under it. At 52rem its text reads at about body size. */
+.resume-page {
+  width: 100%;
+  max-width: 52rem;
+  height: auto;
   margin: var(--space-2xl) auto 0;
-  padding-block-start: var(--space-xl);
-  border-block-start: 1px solid var(--line);
-  text-align: center;
 }
 
-.detail-label {
-  margin-block-end: var(--space-xs);
-  font-size: var(--step--1);
-  font-weight: 400;
-  letter-spacing: 0.22em;
-  /* Tracking trails the last letter; pull it back so the label centres. */
-  margin-inline-start: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-
-@media (max-width: 47.999em) {
-  .about-details { grid-template-columns: 1fr; gap: var(--space-xl); }
-}
+.resume-link { margin-block-start: var(--space-m); }
 
 /* ---------- Lightbox ---------- */
 .lightbox {
@@ -752,7 +774,7 @@ html:has(.is-home) { overflow: hidden; }
     justify-content: center;
     background: none;
   }
-  .no-js .nav-list a { font-size: var(--step-1); }
+  .no-js .nav-list a { font-size: var(--step--1); }
 }
 
 /* Without JS nothing ever sets data-visible, so pin revealed state. */

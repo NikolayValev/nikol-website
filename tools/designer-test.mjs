@@ -59,13 +59,15 @@ let c = await state(p);
 say('side margin limits the row', c.row[2] <= 1440 - 400 + 1 && c.row[2] < a.row[2], `${Math.round(c.row[2])}px`);
 await set(p, 'side', 24);
 
-// fit off, a wide row: overflows and says so
+// fit off, the row as wide as the window: overflows and says so
+await set(p, 'side', 0);
 await set(p, 'fit', false);
-await set(p, 'rowW', 1300);
+await set(p, 'rowW', 1440);
 c = await state(p);
-say('fit off: the row width is the slider\'s', Math.abs(c.row[2] - 1300) < 2, `${Math.round(c.row[2])}px`);
+say('fit off: the row width is the slider\'s', Math.abs(c.row[2] - 1440) < 2, `${Math.round(c.row[2])}px`);
 say('fit off: too tall, and the readout warns', c.footer > c.vh && /Too tall/.test(c.read), lastLine(c.read));
 await set(p, 'fit', true);
+await set(p, 'side', 24);
 
 // title size by hand, with fit on: the row gives way, the page still fits
 await set(p, 'titleMode', 'custom');

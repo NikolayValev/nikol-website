@@ -51,17 +51,21 @@ function boot() {
     probe.remove();
     return Math.round(h);
   };
+  const cssNumber = (name, fallback) => {
+    const v = parseFloat(getComputedStyle(body).getPropertyValue(name));
+    return Number.isFinite(v) ? v : fallback;
+  };
   const defaults = () => ({
     fit: true,            // size the row so the page is exactly one screen tall
     rowW: 1000,           // row width when not fitting
     side: px('var(--home-side, 24px)'),
     picGap: px('var(--tile-gap, 10px)'),
-    shapes: 'natural',    // natural: nothing cropped. same: all one shape
-    ratio: 0.64,          // width:height when shapes is "same"
-    titleMode: 'match',   // match: sized from the pictures. custom: titleSize
+    shapes: 'same',       // natural: nothing cropped. same: all one shape
+    ratio: Math.round(cssNumber('--home-ratio', 0.7) * 100) / 100, // width:height when shapes is "same"
+    titleMode: 'custom',  // match: sized from the pictures. custom: titleSize
     titleAlign: 'centres',// centres: first centre to last centre. edges: row edge to edge
-    titleSize: 110,
-    gapTop: px('var(--home-gap, 58px)'),
+    titleSize: px('var(--home-title, 72px)'),
+    gapTop: px('var(--home-gap-top, 60px)'),
     gapTitle: px('var(--home-gap, 58px)'),
     gapNav: px('var(--home-nav-gap, 45px)'),
     gapFooter: px('var(--home-footer-gap, 20px)'),
@@ -101,11 +105,15 @@ function boot() {
   function applyStatic() {
     body.style.setProperty('--tile-gap', `${s.picGap}px`);
     nav.style.marginBlockStart = `${s.gapNav}px`;
-    footer.style.paddingBlock = `${s.gapFooter}px ${s.gapBottom}px`;
+    // The copyright sits inside the gap under the icons.
+    const note = $('.footer-note', footer);
+    const noteH = note ? note.offsetHeight + parseFloat(getComputedStyle(note).marginBlockStart) : 0;
+    footer.style.paddingBlock = `${s.gapFooter}px ${Math.max(0, s.gapBottom - noteH)}px`;
     body.classList.toggle('ld-freeze', s.freeze);
 
-    // Shapes. "natural" leaves the stylesheet's own sizing alone. "same" crops
-    // every picture to one ratio, so the row is laid out here instead.
+    // Shapes. "same" crops every picture to one ratio (what the stylesheet
+    // does, at --home-ratio). "natural" shows each at its own ratio (--ar on
+    // each slide; 2.618544 is the four added up), all one height.
     const slides = realSlides();
     if (s.shapes === 'same') {
       for (const li of slides) {
@@ -116,10 +124,10 @@ function boot() {
       }
     } else {
       for (const li of slides) {
-        li.style.removeProperty('aspect-ratio');
-        li.style.removeProperty('flex');
+        li.style.aspectRatio = 'var(--ar)';
+        li.style.flex = `0 0 calc((100% - ${3 * s.picGap}px) * var(--ar) / 2.618544)`;
         const img = $('img', li);
-        if (img) { img.style.removeProperty('object-fit'); img.style.removeProperty('object-position'); }
+        if (img) { img.style.objectFit = 'fill'; img.style.removeProperty('object-position'); }
       }
     }
   }
