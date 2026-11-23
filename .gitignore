@@ -17,3 +17,6 @@ preview/
 
 # Upload package built from tools/deploy-manifest.txt (not tracked)
 dist/
+
+# Local cache of the impeccable design hook (its config.json is shared).
+.impeccable/hook.cache.json

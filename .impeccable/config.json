@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "resume.html"
+        ],
+        "createdAt": "2026-11-23T23:40:25.055Z",
+        "reason": "Designer's palette, not a default: #F0EAE2 was sampled from Mila Tsvetanova's Figma comps (site.css :root tokens; commit d0bd0a4 'Background colour #F0EAE2')"
+      }
+    ]
+  }
+}
